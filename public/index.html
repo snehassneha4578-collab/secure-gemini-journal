@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>Personal Gemini Journal</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css">
+
+</head>
+
+<body>
+
+    <!-- ==================================================
+         HEADER
+    ================================================== -->
+
+    <header class="topbar">
+
+        <div>
+
+            <h1>
+                Personal Gemini Journal
+            </h1>
+
+            <p>
+                Your private space to think, write and
+                brainstorm with AI.
+            </p>
+
+        </div>
+
+
+        <div class="account-buttons">
+
+            <button
+                id="loginButton"
+                class="secondary-button">
+
+                Sign In
+
+            </button>
+
+
+            <button
+                id="signupButton"
+                class="primary-button">
+
+                Create Account
+
+            </button>
+
+
+            <button
+                id="logoutButton"
+                class="secondary-button"
+                style="display: none;">
+
+                Logout
+
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- ==================================================
+         MAIN
+    ================================================== -->
+
+    <main class="container">
+
+
+        <!-- ==================================================
+             ACCOUNT
+        ================================================== -->
+
+        <section class="welcome-card">
+
+            <h2>
+                Account
+            </h2>
+
+            <p id="authStatus">
+                Not logged in
+            </p>
+
+        </section>
+
+
+        <!-- ==================================================
+             JOURNAL DASHBOARD
+        ================================================== -->
+
+        <section class="dashboard">
+
+
+            <!-- ==================================================
+                 SIDEBAR
+            ================================================== -->
+
+            <aside class="journal-sidebar">
+
+                <div class="sidebar-header">
+
+                    <h2>
+                        📖 My Journals
+                    </h2>
+
+
+                    <button
+                        id="newConversationButton"
+                        class="primary-button"
+                        disabled>
+
+                        + New Journal
+
+                    </button>
+
+                </div>
+
+
+                <div id="entriesList">
+
+                    <p class="empty-message">
+
+                        Please login to view your journals.
+
+                    </p>
+
+                </div>
+
+            </aside>
+
+
+            <!-- ==================================================
+                 CHAT PANEL
+            ================================================== -->
+
+            <section class="chat-panel">
+
+
+                <!-- CHAT HEADER -->
+
+                <div class="chat-header">
+
+                    <div>
+
+                        <h2 id="journalTitle">
+
+                            New Gemini Journal
+
+                        </h2>
+
+
+                        <p id="journalStatus">
+
+                            Start a new conversation
+
+                        </p>
+
+                    </div>
+
+
+                    <button
+                        id="saveJournalButton"
+                        class="secondary-button"
+                        disabled>
+
+                        Save
+
+                    </button>
+
+                </div>
+
+
+                <!-- ==================================================
+                     CHAT BOX
+                ================================================== -->
+
+                <div
+                    id="chatBox"
+                    class="chat-box">
+
+
+                    <div class="ai-message">
+
+                        <strong>
+                            Gemini:
+                        </strong>
+
+
+                        <p>
+                            Please login to start a conversation.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ==================================================
+                     CHAT INPUT
+                ================================================== -->
+
+                <div class="chat-input-area">
+
+                    <input
+                        type="text"
+                        id="chatInput"
+                        placeholder="Write something to Gemini..."
+                        disabled>
+
+
+                    <button
+                        id="sendButton"
+                        class="primary-button"
+                        disabled>
+
+                        Send
+
+                    </button>
+
+                </div>
+
+
+                <!-- STATUS -->
+
+                <p id="statusMessage"></p>
+
+            </section>
+
+        </section>
+
+
+        <!-- ==================================================
+             QUICK JOURNAL ENTRY
+        ================================================== -->
+
+        <section class="journal-card">
+
+            <h2>
+                📝 Quick Journal Entry
+            </h2>
+
+
+            <textarea
+                id="journalInput"
+                placeholder="Write your thoughts here..."
+                disabled>
+            </textarea>
+
+
+            <div class="button-row">
+
+                <button
+                    id="saveButton"
+                    class="primary-button"
+                    disabled>
+
+                    Save Entry
+
+                </button>
+
+
+                <button
+                    id="clearButton"
+                    class="secondary-button">
+
+                    Clear
+
+                </button>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- ==================================================
+         FOOTER
+    ================================================== -->
+
+    <footer>
+
+        <p>
+            Personal Gemini Journal
+        </p>
+
+
+        <p>
+            Built with Firebase + Firestore + Gemini + Cloud Run
+        </p>
+
+    </footer>
+
+
+    <!-- ==================================================
+         JAVASCRIPT
+    ================================================== -->
+
+    <script
+        type="module"
+        src="app.js">
+    </script>
+
+</body>
+
+</html>
