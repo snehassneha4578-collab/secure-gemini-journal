@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Firebase Button Test</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 50px;
+        }
+
+        button {
+            padding: 15px 25px;
+            margin: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Personal Gemini Journal</h1>
+
+    <button
+        id="loginButton"
+        type="button">
+        SIGN IN TEST
+    </button>
+
+    <button
+        id="signupButton"
+        type="button">
+        CREATE ACCOUNT TEST
+    </button>
+
+    <button
+        id="forgotPasswordButton"
+        type="button">
+        FORGOT PASSWORD TEST
+    </button>
+
+    <p id="result">
+        Click a button.
+    </p>
+
+    <script type="module">
+
+        document
+            .getElementById("loginButton")
+            .addEventListener("click", function () {
+
+                document.getElementById("result").textContent =
+                    "SIGN IN BUTTON WORKS!";
+
+                alert("SIGN IN BUTTON WORKS!");
+
+            });
+
+
+        document
+            .getElementById("signupButton")
+            .addEventListener("click", function () {
+
+                document.getElementById("result").textContent =
+                    "CREATE ACCOUNT BUTTON WORKS!";
+
+                alert("CREATE ACCOUNT BUTTON WORKS!");
+
+            });
+
+
+        document
+            .getElementById("forgotPasswordButton")
+            .addEventListener("click", function () {
+
+                document.getElementById("result").textContent =
+                    "FORGOT PASSWORD BUTTON WORKS!";
+
+                alert("FORGOT PASSWORD BUTTON WORKS!");
+
+            });
+
+    </script>
+
+</body>
+</html>

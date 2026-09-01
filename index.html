@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Personal Gemini Journal</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <div>
+        <h1>Personal Gemini Journal</h1>
+
+        <p>
+            Your private space to think, write and brainstorm with AI.
+        </p>
+    </div>
+
+    <div class="account-buttons">
+
+        <button
+            id="loginButton"
+            class="secondary-button"
+            type="button">
+            Sign In
+        </button>
+
+        <button
+            id="signupButton"
+            class="primary-button"
+            type="button">
+            Create Account
+        </button>
+
+        <button
+            id="forgotPasswordButton"
+            class="secondary-button"
+            type="button">
+            Forgot Password
+        </button>
+
+        <button
+            id="logoutButton"
+            class="secondary-button"
+            type="button"
+            style="display:none;">
+            Logout
+        </button>
+
+    </div>
+
+</header>
+
+
+<main class="container">
+
+    <section class="welcome-card">
+
+        <h2>Account</h2>
+
+        <p id="authStatus">
+            Not logged in
+        </p>
+
+    </section>
+
+
+    <!-- EMAIL LOGIN FORM -->
+
+    <section
+        id="authForm"
+        class="welcome-card"
+        style="display:none;">
+
+        <h2>Email / Password</h2>
+
+        <input
+            type="email"
+            id="email"
+            placeholder="Enter your email"
+            autocomplete="email">
+
+        <br><br>
+
+        <input
+            type="password"
+            id="password"
+            placeholder="Enter your password"
+            autocomplete="current-password">
+
+        <br><br>
+
+        <button
+            id="emailSignInButton"
+            class="primary-button"
+            type="button">
+            Sign In
+        </button>
+
+        <button
+            id="closeAuthButton"
+            class="secondary-button"
+            type="button">
+            Cancel
+        </button>
+
+        <p id="authMessage"></p>
+
+    </section>
+
+
+    <!-- JOURNAL DASHBOARD -->
+
+    <section class="dashboard">
+
+        <aside class="journal-sidebar">
+
+            <div class="sidebar-header">
+
+                <h2>📖 My Journals</h2>
+
+                <button
+                    id="newConversationButton"
+                    class="primary-button"
+                    type="button"
+                    disabled>
+                    + New Journal
+                </button>
+
+            </div>
+
+            <div id="entriesList">
+
+                <p class="empty-message">
+                    Please login to view your journals.
+                </p>
+
+            </div>
+
+        </aside>
+
+
+        <section class="chat-panel">
+
+            <div class="chat-header">
+
+                <div>
+
+                    <h2 id="journalTitle">
+                        New Gemini Journal
+                    </h2>
+
+                    <p id="journalStatus">
+                        Start a new conversation
+                    </p>
+
+                </div>
+
+                <button
+                    id="saveJournalButton"
+                    class="secondary-button"
+                    type="button"
+                    disabled>
+                    Save
+                </button>
+
+            </div>
+
+
+            <div
+                id="chatBox"
+                class="chat-box">
+
+                <div class="ai-message">
+
+                    <strong>Gemini:</strong>
+
+                    <p>
+                        Please login to start a conversation.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="chat-input-area">
+
+                <input
+                    type="text"
+                    id="chatInput"
+                    placeholder="Write something to Gemini..."
+                    disabled>
+
+                <button
+                    id="sendButton"
+                    class="primary-button"
+                    type="button"
+                    disabled>
+                    Send
+                </button>
+
+            </div>
+
+            <p id="statusMessage"></p>
+
+        </section>
+
+    </section>
+
+
+    <!-- QUICK JOURNAL -->
+
+    <section class="journal-card">
+
+        <h2>📝 Quick Journal Entry</h2>
+
+        <textarea
+            id="journalInput"
+            placeholder="Write your thoughts here..."
+            disabled></textarea>
+
+        <div class="button-row">
+
+            <button
+                id="saveButton"
+                class="primary-button"
+                type="button"
+                disabled>
+                Save Entry
+            </button>
+
+            <button
+                id="clearButton"
+                class="secondary-button"
+                type="button">
+                Clear
+            </button>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<footer>
+
+    <p>
+        Personal Gemini Journal
+    </p>
+
+    <p>
+        Built with Firebase + Firestore + Gemini + Cloud Run
+    </p>
+
+</footer>
+
+
+<script
+    type="module"
+    src="./app.js">
+</script>
+
+</body>
+
+</html>
