@@ -1,5 +1,5 @@
 // ======================================================
-// PERSONAL GEMINI JOURNAL - app.js
+// PERSONAL GEMINI JOURNAL - COMPLETE app.js
 // ======================================================
 
 // ======================================================
@@ -130,46 +130,31 @@ function exists(element) {
 // STATUS MESSAGE
 // ======================================================
 
-function showStatus(
-    message,
-    isError = false
-) {
+function showStatus(message, isError = false) {
 
     if (!exists(statusMessage)) {
         return;
     }
 
-    statusMessage.textContent =
-        message;
+    statusMessage.textContent = message;
 
     if (isError) {
 
-        statusMessage.classList.add(
-            "error"
-        );
+        statusMessage.classList.add("error");
 
     } else {
 
-        statusMessage.classList.remove(
-            "error"
-        );
+        statusMessage.classList.remove("error");
     }
 
-    setTimeout(
-        function () {
+    setTimeout(function () {
 
-            if (
-                statusMessage.textContent ===
-                message
-            ) {
+        if (statusMessage.textContent === message) {
 
-                statusMessage.textContent =
-                    "";
-            }
+            statusMessage.textContent = "";
+        }
 
-        },
-        4000
-    );
+    }, 5000);
 }
 
 
@@ -177,17 +162,13 @@ function showStatus(
 // AUTH MESSAGE
 // ======================================================
 
-function showAuthMessage(
-    message,
-    isError = false
-) {
+function showAuthMessage(message, isError = false) {
 
     if (!exists(authMessage)) {
         return;
     }
 
-    authMessage.textContent =
-        message;
+    authMessage.textContent = message;
 
     authMessage.style.color =
         isError
@@ -202,28 +183,21 @@ function showAuthMessage(
 
 function openAuthModal(mode) {
 
-    authMode =
-        mode || "signin";
+    authMode = mode || "signin";
 
     if (!exists(authModal)) {
         return;
     }
 
-    authModal.style.display =
-        "block";
+    authModal.style.display = "block";
 
     if (exists(authForm)) {
         authForm.reset();
     }
 
-    if (
-        authMode ===
-        "signup"
-    ) {
+    if (authMode === "signup") {
 
-        if (
-            exists(emailSignInButton)
-        ) {
+        if (exists(emailSignInButton)) {
 
             emailSignInButton.textContent =
                 "Create Account";
@@ -235,9 +209,7 @@ function openAuthModal(mode) {
 
     } else {
 
-        if (
-            exists(emailSignInButton)
-        ) {
+        if (exists(emailSignInButton)) {
 
             emailSignInButton.textContent =
                 "Sign In";
@@ -285,9 +257,7 @@ if (exists(loginButton)) {
 
             event.preventDefault();
 
-            openAuthModal(
-                "signin"
-            );
+            openAuthModal("signin");
         }
     );
 }
@@ -305,9 +275,7 @@ if (exists(signupButton)) {
 
             event.preventDefault();
 
-            openAuthModal(
-                "signup"
-            );
+            openAuthModal("signup");
         }
     );
 }
@@ -344,10 +312,14 @@ if (exists(authForm)) {
             event.preventDefault();
 
             const email =
-                emailInput.value.trim();
+                emailInput
+                    ? emailInput.value.trim()
+                    : "";
 
             const password =
-                passwordInput.value;
+                passwordInput
+                    ? passwordInput.value
+                    : "";
 
             if (!email) {
 
@@ -356,7 +328,9 @@ if (exists(authForm)) {
                     true
                 );
 
-                emailInput.focus();
+                if (exists(emailInput)) {
+                    emailInput.focus();
+                }
 
                 return;
             }
@@ -368,7 +342,9 @@ if (exists(authForm)) {
                     true
                 );
 
-                passwordInput.focus();
+                if (exists(passwordInput)) {
+                    passwordInput.focus();
+                }
 
                 return;
             }
@@ -378,14 +354,9 @@ if (exists(authForm)) {
             // SIGN UP
             // ==================================================
 
-            if (
-                authMode ===
-                "signup"
-            ) {
+            if (authMode === "signup") {
 
-                if (
-                    password.length < 6
-                ) {
+                if (password.length < 6) {
 
                     showAuthMessage(
                         "Password must be at least 6 characters.",
@@ -397,8 +368,9 @@ if (exists(authForm)) {
 
                 try {
 
-                    emailSignInButton.disabled =
-                        true;
+                    if (exists(emailSignInButton)) {
+                        emailSignInButton.disabled = true;
+                    }
 
                     showAuthMessage(
                         "Creating account..."
@@ -416,9 +388,7 @@ if (exists(authForm)) {
 
                     setTimeout(
                         function () {
-
                             closeAuthModal();
-
                         },
                         700
                     );
@@ -460,7 +430,8 @@ if (exists(authForm)) {
                     } else {
 
                         message =
-                            error.message;
+                            error.message ||
+                            message;
                     }
 
                     showAuthMessage(
@@ -470,8 +441,9 @@ if (exists(authForm)) {
 
                 } finally {
 
-                    emailSignInButton.disabled =
-                        false;
+                    if (exists(emailSignInButton)) {
+                        emailSignInButton.disabled = false;
+                    }
                 }
 
                 return;
@@ -484,8 +456,9 @@ if (exists(authForm)) {
 
             try {
 
-                emailSignInButton.disabled =
-                    true;
+                if (exists(emailSignInButton)) {
+                    emailSignInButton.disabled = true;
+                }
 
                 showAuthMessage(
                     "Signing in..."
@@ -503,9 +476,7 @@ if (exists(authForm)) {
 
                 setTimeout(
                     function () {
-
                         closeAuthModal();
-
                     },
                     500
                 );
@@ -563,7 +534,8 @@ if (exists(authForm)) {
                 } else {
 
                     message =
-                        error.message;
+                        error.message ||
+                        message;
                 }
 
                 showAuthMessage(
@@ -573,8 +545,9 @@ if (exists(authForm)) {
 
             } finally {
 
-                emailSignInButton.disabled =
-                    false;
+                if (exists(emailSignInButton)) {
+                    emailSignInButton.disabled = false;
+                }
             }
         }
     );
@@ -585,9 +558,7 @@ if (exists(authForm)) {
 // FORGOT PASSWORD
 // ======================================================
 
-if (
-    exists(forgotPasswordButton)
-) {
+if (exists(forgotPasswordButton)) {
 
     forgotPasswordButton.addEventListener(
         "click",
@@ -644,18 +615,13 @@ if (exists(logoutButton)) {
 
             try {
 
-                await signOut(
-                    auth
-                );
+                await signOut(auth);
 
-                currentUser =
-                    null;
+                currentUser = null;
 
-                currentMessages =
-                    [];
+                currentMessages = [];
 
-                currentEntryId =
-                    null;
+                currentEntryId = null;
 
                 showStatus(
                     "Logged out successfully."
@@ -664,11 +630,86 @@ if (exists(logoutButton)) {
             } catch (error) {
 
                 showStatus(
-                    error.message,
+                    error.message ||
+                    "Logout failed.",
                     true
                 );
             }
         }
+    );
+}
+
+
+// ======================================================
+// FIREBASE TOKEN
+// ======================================================
+
+async function getIdToken() {
+
+    if (!currentUser) {
+
+        throw new Error(
+            "User is not logged in."
+        );
+    }
+
+    return await currentUser.getIdToken(true);
+}
+
+
+// ======================================================
+// API RESPONSE HELPER
+// ======================================================
+
+async function readApiResponse(response) {
+
+    const contentType =
+        response.headers.get("content-type") || "";
+
+    const text =
+        await response.text();
+
+    if (!text) {
+
+        return {};
+    }
+
+    if (
+        contentType
+            .toLowerCase()
+            .includes("application/json")
+    ) {
+
+        try {
+
+            return JSON.parse(text);
+
+        } catch (error) {
+
+            throw new Error(
+                "Server returned invalid JSON."
+            );
+        }
+    }
+
+
+    // --------------------------------------------------
+    // Render/Firebase/HTML error protection
+    // --------------------------------------------------
+
+    if (
+        text.trim().startsWith("<!DOCTYPE") ||
+        text.trim().startsWith("<html") ||
+        text.includes("<!DOCTYPE html>")
+    ) {
+
+        throw new Error(
+            "Backend returned an HTML page instead of JSON. Please check the Render API."
+        );
+    }
+
+    throw new Error(
+        "Server returned an invalid response."
     );
 }
 
@@ -681,8 +722,7 @@ onAuthStateChanged(
     auth,
     async function (user) {
 
-        currentUser =
-            user;
+        currentUser = user;
 
         if (user) {
 
@@ -690,100 +730,60 @@ onAuthStateChanged(
 
                 authStatus.textContent =
                     "Logged in as: " +
-                    (
-                        user.email ||
-                        ""
-                    );
+                    (user.email || "");
             }
 
             if (exists(loginButton)) {
-
-                loginButton.style.display =
-                    "none";
+                loginButton.style.display = "none";
             }
 
             if (exists(signupButton)) {
-
-                signupButton.style.display =
-                    "none";
+                signupButton.style.display = "none";
             }
 
-            if (
-                exists(
-                    forgotPasswordButton
-                )
-            ) {
-
-                forgotPasswordButton.style.display =
-                    "none";
+            if (exists(forgotPasswordButton)) {
+                forgotPasswordButton.style.display = "none";
             }
 
             if (exists(logoutButton)) {
-
-                logoutButton.style.display =
-                    "inline-block";
+                logoutButton.style.display = "inline-block";
             }
 
-            if (
-                exists(
-                    newConversationButton
-                )
-            ) {
-
-                newConversationButton.disabled =
-                    false;
+            if (exists(newConversationButton)) {
+                newConversationButton.disabled = false;
             }
 
             if (exists(chatInput)) {
-
-                chatInput.disabled =
-                    false;
+                chatInput.disabled = false;
             }
 
             if (exists(sendButton)) {
-
-                sendButton.disabled =
-                    false;
+                sendButton.disabled = false;
             }
 
             if (exists(journalInput)) {
-
-                journalInput.disabled =
-                    false;
+                journalInput.disabled = false;
             }
 
             if (exists(saveButton)) {
-
-                saveButton.disabled =
-                    false;
+                saveButton.disabled = false;
             }
 
             if (exists(clearButton)) {
-
-                clearButton.disabled =
-                    false;
+                clearButton.disabled = false;
             }
 
-            if (
-                exists(
-                    saveJournalButton
-                )
-            ) {
-
-                saveJournalButton.disabled =
-                    false;
+            if (exists(saveJournalButton)) {
+                saveJournalButton.disabled = false;
             }
 
-            currentMessages =
-                [];
+            currentMessages = [];
 
-            currentEntryId =
-                null;
+            currentEntryId = null;
 
             if (exists(chatBox)) {
 
-                chatBox.innerHTML =
-                    "";
+                chatBox.innerHTML = "";
             }
 
             addGeminiMessage(
@@ -801,88 +801,52 @@ onAuthStateChanged(
             }
 
             if (exists(loginButton)) {
-
-                loginButton.style.display =
-                    "inline-block";
+                loginButton.style.display = "inline-block";
             }
 
             if (exists(signupButton)) {
-
-                signupButton.style.display =
-                    "inline-block";
+                signupButton.style.display = "inline-block";
             }
 
-            if (
-                exists(
-                    forgotPasswordButton
-                )
-            ) {
-
-                forgotPasswordButton.style.display =
-                    "inline-block";
+            if (exists(forgotPasswordButton)) {
+                forgotPasswordButton.style.display = "inline-block";
             }
 
             if (exists(logoutButton)) {
-
-                logoutButton.style.display =
-                    "none";
+                logoutButton.style.display = "none";
             }
 
-            if (
-                exists(
-                    newConversationButton
-                )
-            ) {
-
-                newConversationButton.disabled =
-                    true;
+            if (exists(newConversationButton)) {
+                newConversationButton.disabled = true;
             }
 
             if (exists(chatInput)) {
-
-                chatInput.disabled =
-                    true;
+                chatInput.disabled = true;
             }
 
             if (exists(sendButton)) {
-
-                sendButton.disabled =
-                    true;
+                sendButton.disabled = true;
             }
 
             if (exists(journalInput)) {
-
-                journalInput.disabled =
-                    true;
+                journalInput.disabled = true;
             }
 
             if (exists(saveButton)) {
-
-                saveButton.disabled =
-                    true;
+                saveButton.disabled = true;
             }
 
             if (exists(clearButton)) {
-
-                clearButton.disabled =
-                    true;
+                clearButton.disabled = true;
             }
 
-            if (
-                exists(
-                    saveJournalButton
-                )
-            ) {
-
-                saveJournalButton.disabled =
-                    true;
+            if (exists(saveJournalButton)) {
+                saveJournalButton.disabled = true;
             }
 
-            currentMessages =
-                [];
+            currentMessages = [];
 
-            currentEntryId =
-                null;
+            currentEntryId = null;
 
             if (exists(entriesList)) {
 
@@ -916,26 +880,11 @@ onAuthStateChanged(
 function escapeHtml(text) {
 
     return String(text)
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 
@@ -946,22 +895,16 @@ function escapeHtml(text) {
 function renderMarkdown(markdown) {
 
     if (!markdown) {
-
         return "";
     }
 
     const text =
-        escapeHtml(
-            markdown
-        );
+        escapeHtml(markdown);
 
     return `
         <div class="gemini-markdown">
             <p>
-                ${text.replace(
-                    /\n/g,
-                    "<br>"
-                )}
+                ${text.replace(/\n/g, "<br>")}
             </p>
         </div>
     `;
@@ -975,14 +918,11 @@ function renderMarkdown(markdown) {
 function addUserMessage(text) {
 
     if (!exists(chatBox)) {
-
         return;
     }
 
     const message =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     message.className =
         "user-message";
@@ -994,9 +934,7 @@ function addUserMessage(text) {
         </p>
     `;
 
-    chatBox.appendChild(
-        message
-    );
+    chatBox.appendChild(message);
 
     chatBox.scrollTop =
         chatBox.scrollHeight;
@@ -1010,14 +948,11 @@ function addUserMessage(text) {
 function addGeminiMessage(text) {
 
     if (!exists(chatBox)) {
-
         return;
     }
 
     const message =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     message.className =
         "ai-message";
@@ -1027,31 +962,10 @@ function addGeminiMessage(text) {
         ${renderMarkdown(text)}
     `;
 
-    chatBox.appendChild(
-        message
-    );
+    chatBox.appendChild(message);
 
     chatBox.scrollTop =
         chatBox.scrollHeight;
-}
-
-
-// ======================================================
-// FIREBASE TOKEN
-// ======================================================
-
-async function getIdToken() {
-
-    if (!currentUser) {
-
-        throw new Error(
-            "User is not logged in."
-        );
-    }
-
-    return await currentUser.getIdToken(
-        true
-    );
 }
 
 
@@ -1062,7 +976,10 @@ async function getIdToken() {
 async function loadJournalEntries() {
 
     if (!exists(entriesList)) {
+        return;
+    }
 
+    if (!currentUser) {
         return;
     }
 
@@ -1079,26 +996,66 @@ async function loadJournalEntries() {
 
                     headers: {
                         "Authorization":
-                            "Bearer " +
-                            token
+                            "Bearer " + token
                     }
                 }
             );
 
+
+        // --------------------------------------------------
+        // Read backend response safely
+        // --------------------------------------------------
+
         const data =
-            await response.json();
+            await readApiResponse(response);
+
 
         if (!response.ok) {
 
             throw new Error(
                 data.error ||
+                data.message ||
                 "Unable to load journals."
             );
         }
 
-        displayJournalEntries(
-            data
-        );
+
+        // --------------------------------------------------
+        // Support both:
+        //
+        // [...]
+        //
+        // and:
+        //
+        // { journals: [...] }
+        // --------------------------------------------------
+
+        let entries = [];
+
+        if (Array.isArray(data)) {
+
+            entries = data;
+
+        } else if (
+            data &&
+            Array.isArray(data.journals)
+        ) {
+
+            entries = data.journals;
+
+        } else if (
+            data &&
+            Array.isArray(data.entries)
+        ) {
+
+            entries = data.entries;
+
+        } else {
+
+            entries = [];
+        }
+
+        displayJournalEntries(entries);
 
     } catch (error) {
 
@@ -1112,6 +1069,12 @@ async function loadJournalEntries() {
                 Unable to load journal entries.
             </p>
         `;
+
+        showStatus(
+            error.message ||
+            "Unable to load journal entries.",
+            true
+        );
     }
 }
 
@@ -1120,20 +1083,16 @@ async function loadJournalEntries() {
 // DISPLAY JOURNALS
 // ======================================================
 
-function displayJournalEntries(
-    entries
-) {
+function displayJournalEntries(entries) {
 
     if (!exists(entriesList)) {
-
         return;
     }
 
-    entriesList.innerHTML =
-        "";
+    entriesList.innerHTML = "";
 
     if (
-        !entries ||
+        !Array.isArray(entries) ||
         entries.length === 0
     ) {
 
@@ -1146,69 +1105,67 @@ function displayJournalEntries(
         return;
     }
 
-    entries.forEach(
-        function (entry) {
 
-            const item =
-                document.createElement(
-                    "div"
-                );
+    entries.forEach(function (entry) {
 
-            item.className =
-                "journal-entry-item";
+        const item =
+            document.createElement("div");
 
-            const title =
-                entry.title ||
-                "Untitled Entry";
+        item.className =
+            "journal-entry-item";
 
-            const preview =
-                (
-                    entry.content ||
-                    ""
-                ).substring(
-                    0,
-                    100
-                );
+        const title =
+            entry.title ||
+            "Untitled Entry";
 
-            item.innerHTML = `
-                <div class="journal-entry-title">
-                    ${escapeHtml(title)}
-                </div>
+        const preview =
+            (
+                entry.content ||
+                ""
+            ).substring(0, 100);
 
-                <div class="journal-entry-preview">
-                    ${escapeHtml(preview)}
-                </div>
+        item.innerHTML = `
+            <div class="journal-entry-title">
+                ${escapeHtml(title)}
+            </div>
 
-                <button
-                    type="button"
-                    class="delete-entry-button">
-                    Delete
-                </button>
-            `;
+            <div class="journal-entry-preview">
+                ${escapeHtml(preview)}
+            </div>
 
-            item.addEventListener(
-                "click",
-                function (event) {
+            <button
+                type="button"
+                class="delete-entry-button">
+                Delete
+            </button>
+        `;
 
-                    if (
-                        event.target.classList.contains(
-                            "delete-entry-button"
-                        )
-                    ) {
 
-                        return;
-                    }
+        item.addEventListener(
+            "click",
+            function (event) {
 
-                    openJournalEntry(
-                        entry
-                    );
+                if (
+                    event.target.classList.contains(
+                        "delete-entry-button"
+                    )
+                ) {
+
+                    return;
                 }
+
+                openJournalEntry(entry);
+            }
+        );
+
+
+        const deleteButton =
+            item.querySelector(
+                ".delete-entry-button"
             );
 
-            const deleteButton =
-                item.querySelector(
-                    ".delete-entry-button"
-                );
+
+        if (deleteButton) {
 
             deleteButton.addEventListener(
                 "click",
@@ -1221,12 +1178,11 @@ function displayJournalEntries(
                     );
                 }
             );
-
-            entriesList.appendChild(
-                item
-            );
         }
-    );
+
+
+        entriesList.appendChild(item);
+    });
 }
 
 
@@ -1234,9 +1190,7 @@ function displayJournalEntries(
 // OPEN JOURNAL
 // ======================================================
 
-function openJournalEntry(
-    entry
-) {
+function openJournalEntry(entry) {
 
     currentEntryId =
         entry.id;
@@ -1256,16 +1210,13 @@ function openJournalEntry(
 
     if (exists(chatBox)) {
 
-        chatBox.innerHTML =
-            "";
+        chatBox.innerHTML = "";
     }
 
-    currentMessages =
-        [];
+    currentMessages = [];
 
     addUserMessage(
-        entry.content ||
-        ""
+        entry.content || ""
     );
 }
 
@@ -1274,9 +1225,17 @@ function openJournalEntry(
 // DELETE JOURNAL
 // ======================================================
 
-async function deleteJournalEntry(
-    id
-) {
+async function deleteJournalEntry(id) {
+
+    if (!id) {
+
+        showStatus(
+            "Invalid journal ID.",
+            true
+        );
+
+        return;
+    }
 
     if (
         !confirm(
@@ -1301,38 +1260,37 @@ async function deleteJournalEntry(
 
                     headers: {
                         "Authorization":
-                            "Bearer " +
-                            token
+                            "Bearer " + token
                     }
                 }
             );
 
+
         const data =
-            await response.json();
+            await readApiResponse(response);
+
 
         if (!response.ok) {
 
             throw new Error(
                 data.error ||
+                data.message ||
                 "Delete failed."
             );
         }
 
+
         if (
-            currentEntryId ===
-            id
+            currentEntryId === id
         ) {
 
-            currentEntryId =
-                null;
+            currentEntryId = null;
 
-            currentMessages =
-                [];
+            currentMessages = [];
 
             if (exists(chatBox)) {
 
-                chatBox.innerHTML =
-                    "";
+                chatBox.innerHTML = "";
             }
 
             if (exists(journalTitle)) {
@@ -1348,16 +1306,23 @@ async function deleteJournalEntry(
             }
         }
 
+
         showStatus(
-            "Journal entry deleted."
+            "Journal entry deleted successfully."
         );
 
         await loadJournalEntries();
 
     } catch (error) {
 
+        console.error(
+            "Delete journal error:",
+            error
+        );
+
         showStatus(
-            error.message,
+            error.message ||
+            "Delete failed.",
             true
         );
     }
@@ -1392,10 +1357,7 @@ if (exists(chatInput)) {
         "keydown",
         async function (event) {
 
-            if (
-                event.key ===
-                "Enter"
-            ) {
+            if (event.key === "Enter") {
 
                 event.preventDefault();
 
@@ -1413,12 +1375,10 @@ if (exists(chatInput)) {
 async function sendMessage() {
 
     if (isSending) {
-
         return;
     }
 
     if (!exists(chatInput)) {
-
         return;
     }
 
@@ -1452,16 +1412,13 @@ async function sendMessage() {
     // START REQUEST
     // ==================================================
 
-    isSending =
-        true;
+    isSending = true;
 
-    chatInput.value =
-        "";
+    chatInput.value = "";
 
     if (exists(sendButton)) {
 
-        sendButton.disabled =
-            true;
+        sendButton.disabled = true;
 
         sendButton.textContent =
             "Thinking...";
@@ -1472,9 +1429,7 @@ async function sendMessage() {
     // DISPLAY USER MESSAGE
     // ==================================================
 
-    addUserMessage(
-        message
-    );
+    addUserMessage(message);
 
 
     // ==================================================
@@ -1483,11 +1438,9 @@ async function sendMessage() {
 
     currentMessages.push({
 
-        role:
-            "user",
+        role: "user",
 
-        text:
-            message
+        text: message
     });
 
 
@@ -1496,9 +1449,7 @@ async function sendMessage() {
     // ==================================================
 
     const thinkingMessage =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     thinkingMessage.className =
         "ai-message";
@@ -1522,7 +1473,7 @@ async function sendMessage() {
     try {
 
         // ==============================================
-        // GET FIREBASE ID TOKEN
+        // FIREBASE ID TOKEN
         // ==============================================
 
         const token =
@@ -1537,8 +1488,7 @@ async function sendMessage() {
             await fetch(
                 BACKEND_URL + "/api/chat",
                 {
-                    method:
-                        "POST",
+                    method: "POST",
 
                     headers: {
 
@@ -1546,8 +1496,7 @@ async function sendMessage() {
                             "application/json",
 
                         "Authorization":
-                            "Bearer " +
-                            token
+                            "Bearer " + token
                     },
 
                     body:
@@ -1565,19 +1514,8 @@ async function sendMessage() {
         // READ RESPONSE
         // ==============================================
 
-        let data;
-
-        try {
-
-            data =
-                await response.json();
-
-        } catch (jsonError) {
-
-            throw new Error(
-                "Server returned an invalid response."
-            );
-        }
+        const data =
+            await readApiResponse(response);
 
 
         // ==============================================
@@ -1588,6 +1526,7 @@ async function sendMessage() {
 
             throw new Error(
                 data.error ||
+                data.message ||
                 "Gemini could not respond."
             );
         }
@@ -1612,6 +1551,8 @@ async function sendMessage() {
 
         const geminiText =
             data.response ||
+            data.text ||
+            data.message ||
             "Gemini did not return a response.";
 
 
@@ -1621,11 +1562,9 @@ async function sendMessage() {
 
         currentMessages.push({
 
-            role:
-                "model",
+            role: "model",
 
-            text:
-                geminiText
+            text: geminiText
         });
 
 
@@ -1659,7 +1598,10 @@ async function sendMessage() {
         // ==============================================
 
         if (
-            currentMessages.length > 0
+            currentMessages.length > 0 &&
+            currentMessages[
+                currentMessages.length - 1
+            ].role === "user"
         ) {
 
             currentMessages.pop();
@@ -1684,7 +1626,8 @@ async function sendMessage() {
 
                 <small>
                     ${escapeHtml(
-                        error.message
+                        error.message ||
+                        "Unknown server error."
                     )}
                 </small>
             `;
@@ -1695,6 +1638,7 @@ async function sendMessage() {
                 "Sorry, Gemini could not respond."
             );
         }
+
 
         showStatus(
             error.message ||
@@ -1708,13 +1652,11 @@ async function sendMessage() {
         // RESTORE RUN BUTTON
         // ==============================================
 
-        isSending =
-            false;
+        isSending = false;
 
         if (exists(sendButton)) {
 
-            sendButton.disabled =
-                false;
+            sendButton.disabled = false;
 
             sendButton.textContent =
                 "Run";
@@ -1732,11 +1674,7 @@ async function sendMessage() {
 // NEW CONVERSATION
 // ======================================================
 
-if (
-    exists(
-        newConversationButton
-    )
-) {
+if (exists(newConversationButton)) {
 
     newConversationButton.addEventListener(
         "click",
@@ -1744,11 +1682,9 @@ if (
 
             event.preventDefault();
 
-            currentMessages =
-                [];
+            currentMessages = [];
 
-            currentEntryId =
-                null;
+            currentEntryId = null;
 
             if (exists(journalTitle)) {
 
@@ -1764,8 +1700,7 @@ if (
 
             if (exists(chatBox)) {
 
-                chatBox.innerHTML =
-                    "";
+                chatBox.innerHTML = "";
             }
 
             addGeminiMessage(
@@ -1774,8 +1709,7 @@ if (
 
             if (exists(chatInput)) {
 
-                chatInput.value =
-                    "";
+                chatInput.value = "";
 
                 chatInput.focus();
             }
@@ -1788,11 +1722,7 @@ if (
 // SAVE CONVERSATION
 // ======================================================
 
-if (
-    exists(
-        saveJournalButton
-    )
-) {
+if (exists(saveJournalButton)) {
 
     saveJournalButton.addEventListener(
         "click",
@@ -1801,8 +1731,7 @@ if (
             event.preventDefault();
 
             if (
-                currentMessages.length ===
-                0
+                currentMessages.length === 0
             ) {
 
                 showStatus(
@@ -1823,42 +1752,37 @@ if (
                 return;
             }
 
+
             try {
 
                 const content =
                     currentMessages
-                        .map(
-                            function (
-                                message
-                            ) {
+                        .map(function (message) {
 
-                                const role =
-                                    message.role ===
-                                    "user"
-                                        ? "You"
-                                        : "Gemini";
+                            const role =
+                                message.role === "user"
+                                    ? "You"
+                                    : "Gemini";
 
-                                return (
-                                    role +
-                                    ": " +
-                                    message.text
-                                );
-                            }
-                        )
-                        .join(
-                            "\n\n"
-                        );
+                            return (
+                                role +
+                                ": " +
+                                message.text
+                            );
+                        })
+                        .join("\n\n");
+
 
                 const token =
                     await getIdToken();
+
 
                 const response =
                     await fetch(
                         BACKEND_URL +
                         "/api/journal",
                         {
-                            method:
-                                "POST",
+                            method: "POST",
 
                             headers: {
 
@@ -1866,40 +1790,54 @@ if (
                                     "application/json",
 
                                 "Authorization":
-                                    "Bearer " +
-                                    token
+                                    "Bearer " + token
                             },
 
                             body:
                                 JSON.stringify({
 
                                     title:
-                                        "Gemini Conversation",
+                                        journalTitle &&
+                                        journalTitle.textContent !==
+                                        "New Gemini Journal"
+                                            ? journalTitle.textContent
+                                            : "Gemini Conversation",
 
                                     content:
                                         content,
 
                                     mood:
                                         null
-
                                 })
                         }
                     );
 
+
                 const data =
-                    await response.json();
+                    await readApiResponse(response);
+
 
                 if (!response.ok) {
 
                     throw new Error(
                         data.error ||
+                        data.message ||
                         "Unable to save conversation."
                     );
                 }
 
+
                 showStatus(
                     "Conversation saved successfully."
                 );
+
+
+                if (data.id) {
+
+                    currentEntryId =
+                        data.id;
+                }
+
 
                 await loadJournalEntries();
 
@@ -1911,7 +1849,8 @@ if (
                 );
 
                 showStatus(
-                    error.message,
+                    error.message ||
+                    "Unable to save conversation.",
                     true
                 );
             }
@@ -1943,7 +1882,9 @@ if (exists(saveButton)) {
             }
 
             const content =
-                journalInput.value.trim();
+                exists(journalInput)
+                    ? journalInput.value.trim()
+                    : "";
 
             if (!content) {
 
@@ -1955,18 +1896,19 @@ if (exists(saveButton)) {
                 return;
             }
 
+
             try {
 
                 const token =
                     await getIdToken();
+
 
                 const response =
                     await fetch(
                         BACKEND_URL +
                         "/api/journal",
                         {
-                            method:
-                                "POST",
+                            method: "POST",
 
                             headers: {
 
@@ -1974,8 +1916,7 @@ if (exists(saveButton)) {
                                     "application/json",
 
                                 "Authorization":
-                                    "Bearer " +
-                                    token
+                                    "Bearer " + token
                             },
 
                             body:
@@ -1989,28 +1930,32 @@ if (exists(saveButton)) {
 
                                     mood:
                                         null
-
                                 })
                         }
                     );
 
+
                 const data =
-                    await response.json();
+                    await readApiResponse(response);
+
 
                 if (!response.ok) {
 
                     throw new Error(
                         data.error ||
+                        data.message ||
                         "Unable to save journal."
                     );
                 }
 
-                journalInput.value =
-                    "";
+
+                journalInput.value = "";
+
 
                 showStatus(
                     "Journal entry saved successfully."
                 );
+
 
                 await loadJournalEntries();
 
@@ -2022,7 +1967,8 @@ if (exists(saveButton)) {
                 );
 
                 showStatus(
-                    error.message,
+                    error.message ||
+                    "Unable to save journal.",
                     true
                 );
             }
@@ -2045,8 +1991,7 @@ if (exists(clearButton)) {
 
             if (exists(journalInput)) {
 
-                journalInput.value =
-                    "";
+                journalInput.value = "";
             }
         }
     );
@@ -2108,6 +2053,11 @@ console.log(
 );
 
 console.log(
+    "Backend URL:",
+    BACKEND_URL
+);
+
+console.log(
     "Run button connected."
 );
 
@@ -2117,6 +2067,14 @@ console.log(
 
 console.log(
     "Journal saving enabled."
+);
+
+console.log(
+    "Journal loading enabled."
+);
+
+console.log(
+    "Journal deletion enabled."
 );
 
 console.log(
