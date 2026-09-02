@@ -1,51 +1,60 @@
 // ======================================================
-// PERSONAL GEMINI JOURNAL - COMPLETE app.js
+// PERSONAL GEMINI JOURNAL - FRONTEND
 // ======================================================
 
 // ======================================================
-// FIREBASE AUTH
+// FIREBASE CONFIGURATION
 // ======================================================
 
-import { auth } from "./firebase.js";
-
-import {
-    signOut,
-    onAuthStateChanged,
-    sendPasswordResetEmail,
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword
-} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
-
+const firebaseConfig = {
+    apiKey: "YOUR_FIREBASE_WEB_API_KEY",
+    authDomain: "gemini-journal-8a53a.firebaseapp.com",
+    projectId: "gemini-journal-8a53a",
+    storageBucket: "gemini-journal-8a53a.firebasestorage.app",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_FIREBASE_APP_ID"
+};
 
 // ======================================================
-// RENDER BACKEND
+// FIREBASE INITIALIZATION
+// ======================================================
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+
+// ======================================================
+// BACKEND URL
 // ======================================================
 
 const BACKEND_URL =
     "https://secure-gemini-journal-tjdq.onrender.com";
 
+// ======================================================
+// GLOBAL VARIABLES
+// ======================================================
+
+let currentUser = null;
+
+let currentMessages = [];
+
+let currentJournalId = null;
 
 // ======================================================
 // DOM ELEMENTS
 // ======================================================
 
-const loginButton =
-    document.getElementById("loginButton");
+const loginSection =
+    document.getElementById("loginSection");
 
-const signupButton =
-    document.getElementById("signupButton");
+const journalSection =
+    document.getElementById("journalSection");
 
-const forgotPasswordButton =
-    document.getElementById("forgotPasswordButton");
+const loginForm =
+    document.getElementById("loginForm");
 
-const logoutButton =
-    document.getElementById("logoutButton");
-
-const authModal =
-    document.getElementById("authModal");
-
-const authForm =
-    document.getElementById("authForm");
+const signupForm =
+    document.getElementById("signupForm");
 
 const emailInput =
     document.getElementById("email");
@@ -53,320 +62,348 @@ const emailInput =
 const passwordInput =
     document.getElementById("password");
 
-const emailSignInButton =
-    document.getElementById("emailSignInButton");
+const signupEmailInput =
+    document.getElementById("signupEmail");
 
-const closeAuthButton =
-    document.getElementById("closeAuthButton");
+const signupPasswordInput =
+    document.getElementById("signupPassword");
 
-const authMessage =
-    document.getElementById("authMessage");
+const loginMessage =
+    document.getElementById("loginMessage");
 
-const authStatus =
-    document.getElementById("authStatus");
+const userEmailDisplay =
+    document.getElementById("userEmail");
+
+const logoutButton =
+    document.getElementById("logoutButton");
+
+const journalEntriesContainer =
+    document.getElementById("journalEntries");
+
+const messagesContainer =
+    document.getElementById("messages");
+
+const messageInput =
+    document.getElementById("messageInput");
+
+const sendMessageButton =
+    document.getElementById("sendMessageButton");
 
 const newConversationButton =
     document.getElementById("newConversationButton");
 
-const entriesList =
-    document.getElementById("entriesList");
-
-const journalTitle =
-    document.getElementById("journalTitle");
-
-const journalStatus =
-    document.getElementById("journalStatus");
-
 const saveJournalButton =
     document.getElementById("saveJournalButton");
-
-const chatBox =
-    document.getElementById("chatBox");
-
-const chatInput =
-    document.getElementById("chatInput");
-
-const sendButton =
-    document.getElementById("sendButton");
-
-const statusMessage =
-    document.getElementById("statusMessage");
-
-const journalInput =
-    document.getElementById("journalInput");
-
-const saveButton =
-    document.getElementById("saveButton");
 
 const clearButton =
     document.getElementById("clearButton");
 
+const journalTitleInput =
+    document.getElementById("journalTitle");
+
+const journalContentInput =
+    document.getElementById("journalContent");
+
+const journalMoodInput =
+    document.getElementById("journalMood");
+
+const quickSaveButton =
+    document.getElementById("quickSaveButton");
+
+const quickJournalInput =
+    document.getElementById("quickJournalInput");
+
+const quickJournalMessage =
+    document.getElementById("quickJournalMessage");
+
+const resetPasswordButton =
+    document.getElementById("resetPasswordButton");
+
+const showSignupButton =
+    document.getElementById("showSignupButton");
+
+const showLoginButton =
+    document.getElementById("showLoginButton");
+
+const authContainer =
+    document.getElementById("authContainer");
+
+const appContainer =
+    document.getElementById("appContainer");
 
 // ======================================================
-// VARIABLES
+// SAFE ELEMENT DISPLAY
 // ======================================================
 
-let currentUser = null;
+function showElement(element) {
 
-let currentMessages = [];
+    if (element) {
 
-let currentEntryId = null;
+        element.style.display = "";
 
-let authMode = "signin";
-
-let isSending = false;
-
-
-// ======================================================
-// HELPER
-// ======================================================
-
-function exists(element) {
-
-    return element !== null;
+    }
 
 }
 
+function hideElement(element) {
+
+    if (element) {
+
+        element.style.display = "none";
+
+    }
+
+}
 
 // ======================================================
-// STATUS MESSAGE
+// HTML ESCAPE
 // ======================================================
 
-function showStatus(
-    message,
-    isError = false
+function escapeHtml(value) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+
+        return "";
+
+    }
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+// ======================================================
+// API REQUEST HELPER
+// ======================================================
+
+async function apiRequest(
+    endpoint,
+    options = {}
 ) {
 
-    if (!exists(statusMessage)) {
-        return;
-    }
+    if (!currentUser) {
 
-    statusMessage.textContent =
-        message;
-
-    if (isError) {
-
-        statusMessage.classList.add(
-            "error"
-        );
-
-    } else {
-
-        statusMessage.classList.remove(
-            "error"
+        throw new Error(
+            "User is not logged in."
         );
 
     }
 
-    setTimeout(
-        function () {
+    const token =
+        await currentUser.getIdToken(
+            true
+        );
 
-            if (
-                statusMessage.textContent ===
-                message
-            ) {
+    const requestOptions = {
 
-                statusMessage.textContent =
-                    "";
+        ...options,
+
+        headers: {
+
+            "Content-Type":
+                "application/json",
+
+            "Authorization":
+                `Bearer ${token}`,
+
+            ...(options.headers || {})
+
+        }
+
+    };
+
+    const response =
+        await fetch(
+            BACKEND_URL + endpoint,
+            requestOptions
+        );
+
+    let data;
+
+    try {
+
+        data =
+            await response.json();
+
+    } catch (error) {
+
+        data = {};
+
+    }
+
+    if (!response.ok) {
+
+        const errorMessage =
+            data.error ||
+            data.message ||
+            `Request failed with status ${response.status}`;
+
+        const error =
+            new Error(
+                errorMessage
+            );
+
+        error.status =
+            response.status;
+
+        throw error;
+
+    }
+
+    return data;
+
+}
+
+// ======================================================
+// AUTH STATE
+// ======================================================
+
+auth.onAuthStateChanged(
+    async (user) => {
+
+        console.log(
+            "Auth state changed:",
+            user
+                ? user.email
+                : "No user"
+        );
+
+
+        currentUser =
+            user;
+
+
+        if (user) {
+
+            console.log(
+                "User logged in:",
+                user.email
+            );
+
+
+            if (userEmailDisplay) {
+
+                userEmailDisplay.textContent =
+                    `Logged in as: ${user.email}`;
 
             }
 
-        },
-        5000
-    );
 
-}
+            if (authContainer) {
 
+                hideElement(
+                    authContainer
+                );
 
-// ======================================================
-// AUTH MESSAGE
-// ======================================================
-
-function showAuthMessage(
-    message,
-    isError = false
-) {
-
-    if (!exists(authMessage)) {
-        return;
-    }
-
-    authMessage.textContent =
-        message;
-
-    authMessage.style.color =
-        isError
-            ? "red"
-            : "";
-
-}
+            }
 
 
-// ======================================================
-// OPEN AUTH MODAL
-// ======================================================
+            if (appContainer) {
 
-function openAuthModal(
-    mode
-) {
+                showElement(
+                    appContainer
+                );
 
-    authMode =
-        mode || "signin";
-
-    if (!exists(authModal)) {
-        return;
-    }
-
-    authModal.style.display =
-        "block";
-
-    if (exists(authForm)) {
-
-        authForm.reset();
-
-    }
-
-    if (
-        authMode ===
-        "signup"
-    ) {
-
-        if (
-            exists(emailSignInButton)
-        ) {
-
-            emailSignInButton.textContent =
-                "Create Account";
-
-        }
-
-        showAuthMessage(
-            "Enter your email and password to create an account."
-        );
-
-    } else {
-
-        if (
-            exists(emailSignInButton)
-        ) {
-
-            emailSignInButton.textContent =
-                "Sign In";
-
-        }
-
-        showAuthMessage("");
-
-    }
-
-    if (exists(emailInput)) {
-
-        emailInput.focus();
-
-    }
-
-}
+            }
 
 
-// ======================================================
-// CLOSE AUTH MODAL
-// ======================================================
+            if (loginSection) {
 
-function closeAuthModal() {
+                hideElement(
+                    loginSection
+                );
 
-    if (exists(authModal)) {
-
-        authModal.style.display =
-            "none";
-
-    }
-
-    if (exists(authForm)) {
-
-        authForm.reset();
-
-    }
-
-    showAuthMessage("");
-
-}
+            }
 
 
-// ======================================================
-// LOGIN BUTTON
-// ======================================================
+            if (journalSection) {
 
-if (exists(loginButton)) {
+                showElement(
+                    journalSection
+                );
 
-    loginButton.addEventListener(
-        "click",
-        function (event) {
+            }
 
-            event.preventDefault();
 
-            openAuthModal(
-                "signin"
+            try {
+
+                await loadJournalEntries();
+
+            } catch (error) {
+
+                console.error(
+                    "Initial journal loading failed:",
+                    error
+                );
+
+            }
+
+        } else {
+
+            console.log(
+                "No user logged in."
             );
 
-        }
-    );
 
-}
+            if (authContainer) {
 
+                showElement(
+                    authContainer
+                );
 
-// ======================================================
-// SIGNUP BUTTON
-// ======================================================
-
-if (exists(signupButton)) {
-
-    signupButton.addEventListener(
-        "click",
-        function (event) {
-
-            event.preventDefault();
-
-            openAuthModal(
-                "signup"
-            );
-
-        }
-    );
-
-}
+            }
 
 
-// ======================================================
-// CLOSE AUTH BUTTON
-// ======================================================
+            if (appContainer) {
 
-if (exists(closeAuthButton)) {
+                hideElement(
+                    appContainer
+                );
 
-    closeAuthButton.addEventListener(
-        "click",
-        function (event) {
+            }
 
-            event.preventDefault();
 
-            closeAuthModal();
+            if (loginSection) {
+
+                showElement(
+                    loginSection
+                );
+
+            }
+
+
+            if (journalSection) {
+
+                hideElement(
+                    journalSection
+                );
+
+            }
 
         }
-    );
 
-}
-
+    }
+);
 
 // ======================================================
-// AUTH FORM
+// LOGIN
 // ======================================================
 
-if (exists(authForm)) {
+if (loginForm) {
 
-    authForm.addEventListener(
+    loginForm.addEventListener(
         "submit",
-        async function (event) {
+        async (event) => {
 
             event.preventDefault();
+
 
             const email =
                 emailInput
@@ -378,277 +415,53 @@ if (exists(authForm)) {
                     ? passwordInput.value
                     : "";
 
-            if (!email) {
 
-                showAuthMessage(
-                    "Please enter your email address.",
+            if (!email || !password) {
+
+                setLoginMessage(
+                    "Please enter email and password.",
                     true
                 );
 
-                if (exists(emailInput)) {
-
-                    emailInput.focus();
-
-                }
-
                 return;
-            }
 
-            if (!password) {
-
-                showAuthMessage(
-                    "Please enter your password.",
-                    true
-                );
-
-                if (exists(passwordInput)) {
-
-                    passwordInput.focus();
-
-                }
-
-                return;
             }
 
 
-            // ==================================================
-            // SIGN UP
-            // ==================================================
+            setLoginMessage(
+                "Signing in...",
+                false
+            );
 
-            if (
-                authMode ===
-                "signup"
-            ) {
-
-                if (
-                    password.length < 6
-                ) {
-
-                    showAuthMessage(
-                        "Password must be at least 6 characters.",
-                        true
-                    );
-
-                    return;
-                }
-
-                try {
-
-                    if (
-                        exists(
-                            emailSignInButton
-                        )
-                    ) {
-
-                        emailSignInButton.disabled =
-                            true;
-
-                    }
-
-                    showAuthMessage(
-                        "Creating account..."
-                    );
-
-                    await createUserWithEmailAndPassword(
-                        auth,
-                        email,
-                        password
-                    );
-
-                    showAuthMessage(
-                        "Account created successfully!"
-                    );
-
-                    setTimeout(
-                        function () {
-
-                            closeAuthModal();
-
-                        },
-                        700
-                    );
-
-                } catch (error) {
-
-                    console.error(
-                        "Signup error:",
-                        error
-                    );
-
-                    let message =
-                        "Account creation failed.";
-
-                    if (
-                        error.code ===
-                        "auth/email-already-in-use"
-                    ) {
-
-                        message =
-                            "This email already has an account.";
-
-                    } else if (
-                        error.code ===
-                        "auth/invalid-email"
-                    ) {
-
-                        message =
-                            "Invalid email address.";
-
-                    } else if (
-                        error.code ===
-                        "auth/weak-password"
-                    ) {
-
-                        message =
-                            "Password must be at least 6 characters.";
-
-                    } else {
-
-                        message =
-                            error.message ||
-                            message;
-
-                    }
-
-                    showAuthMessage(
-                        message,
-                        true
-                    );
-
-                } finally {
-
-                    if (
-                        exists(
-                            emailSignInButton
-                        )
-                    ) {
-
-                        emailSignInButton.disabled =
-                            false;
-
-                    }
-
-                }
-
-                return;
-            }
-
-
-            // ==================================================
-            // SIGN IN
-            // ==================================================
 
             try {
 
-                if (
-                    exists(
-                        emailSignInButton
-                    )
-                ) {
-
-                    emailSignInButton.disabled =
-                        true;
-
-                }
-
-                showAuthMessage(
-                    "Signing in..."
-                );
-
-                await signInWithEmailAndPassword(
-                    auth,
+                await auth.signInWithEmailAndPassword(
                     email,
                     password
                 );
 
-                showAuthMessage(
-                    "Sign in successful!"
+
+                setLoginMessage(
+                    "",
+                    false
                 );
 
-                setTimeout(
-                    function () {
-
-                        closeAuthModal();
-
-                    },
-                    500
-                );
 
             } catch (error) {
 
                 console.error(
-                    "Signin error:",
+                    "Login error:",
                     error
                 );
 
-                let message =
-                    "Sign in failed.";
 
-                if (
-                    error.code ===
-                    "auth/invalid-credential"
-                ) {
-
-                    message =
-                        "Incorrect email or password.";
-
-                } else if (
-                    error.code ===
-                    "auth/user-not-found"
-                ) {
-
-                    message =
-                        "No account exists with this email.";
-
-                } else if (
-                    error.code ===
-                    "auth/wrong-password"
-                ) {
-
-                    message =
-                        "Incorrect password.";
-
-                } else if (
-                    error.code ===
-                    "auth/invalid-email"
-                ) {
-
-                    message =
-                        "Invalid email address.";
-
-                } else if (
-                    error.code ===
-                    "auth/too-many-requests"
-                ) {
-
-                    message =
-                        "Too many attempts. Try again later.";
-
-                } else {
-
-                    message =
-                        error.message ||
-                        message;
-
-                }
-
-                showAuthMessage(
-                    message,
+                setLoginMessage(
+                    getFirebaseErrorMessage(
+                        error
+                    ),
                     true
                 );
-
-            } finally {
-
-                if (
-                    exists(
-                        emailSignInButton
-                    )
-                ) {
-
-                    emailSignInButton.disabled =
-                        false;
-
-                }
 
             }
 
@@ -657,44 +470,264 @@ if (exists(authForm)) {
 
 }
 
-
 // ======================================================
-// FORGOT PASSWORD
+// SIGN UP
 // ======================================================
 
-if (
-    exists(
-        forgotPasswordButton
-    )
-) {
+if (signupForm) {
 
-    forgotPasswordButton.addEventListener(
-        "click",
-        async function (event) {
+    signupForm.addEventListener(
+        "submit",
+        async (event) => {
 
             event.preventDefault();
 
-            const email =
-                prompt(
-                    "Enter your registered email address:"
-                );
 
-            if (!email) {
+            const email =
+                signupEmailInput
+                    ? signupEmailInput.value.trim()
+                    : "";
+
+            const password =
+                signupPasswordInput
+                    ? signupPasswordInput.value
+                    : "";
+
+
+            if (!email || !password) {
+
+                setLoginMessage(
+                    "Please enter email and password.",
+                    true
+                );
 
                 return;
 
             }
 
+
+            if (password.length < 6) {
+
+                setLoginMessage(
+                    "Password must contain at least 6 characters.",
+                    true
+                );
+
+                return;
+
+            }
+
+
+            setLoginMessage(
+                "Creating account...",
+                false
+            );
+
+
             try {
 
-                await sendPasswordResetEmail(
-                    auth,
-                    email.trim()
+                await auth.createUserWithEmailAndPassword(
+                    email,
+                    password
                 );
 
-                alert(
-                    "Password reset email sent successfully!"
+
+                setLoginMessage(
+                    "",
+                    false
                 );
+
+
+            } catch (error) {
+
+                console.error(
+                    "Signup error:",
+                    error
+                );
+
+
+                setLoginMessage(
+                    getFirebaseErrorMessage(
+                        error
+                    ),
+                    true
+                );
+
+            }
+
+        }
+    );
+
+}
+
+// ======================================================
+// FIREBASE ERROR MESSAGE
+// ======================================================
+
+function getFirebaseErrorMessage(
+    error
+) {
+
+    const code =
+        error &&
+        error.code
+            ? error.code
+            : "";
+
+
+    switch (code) {
+
+        case "auth/invalid-email":
+
+            return "Please enter a valid email address.";
+
+        case "auth/user-not-found":
+
+            return "No account found with this email.";
+
+        case "auth/wrong-password":
+
+            return "Incorrect password.";
+
+        case "auth/invalid-credential":
+
+            return "Invalid email or password.";
+
+        case "auth/email-already-in-use":
+
+            return "An account already exists with this email.";
+
+        case "auth/weak-password":
+
+            return "Password is too weak.";
+
+        case "auth/too-many-requests":
+
+            return "Too many attempts. Please try again later.";
+
+        default:
+
+            return (
+                error.message ||
+                "Authentication failed."
+            );
+
+    }
+
+}
+
+// ======================================================
+// LOGIN MESSAGE
+// ======================================================
+
+function setLoginMessage(
+    message,
+    isError
+) {
+
+    if (!loginMessage) {
+
+        return;
+
+    }
+
+
+    loginMessage.textContent =
+        message;
+
+
+    loginMessage.style.display =
+        message
+            ? "block"
+            : "none";
+
+
+    if (isError) {
+
+        loginMessage.style.color =
+            "red";
+
+    } else {
+
+        loginMessage.style.color =
+            "";
+
+    }
+
+}
+
+// ======================================================
+// LOGOUT
+// ======================================================
+
+if (logoutButton) {
+
+    logoutButton.addEventListener(
+        "click",
+        async () => {
+
+            try {
+
+                await auth.signOut();
+
+                currentMessages = [];
+
+                currentJournalId = null;
+
+            } catch (error) {
+
+                console.error(
+                    "Logout error:",
+                    error
+                );
+
+            }
+
+        }
+    );
+
+}
+
+// ======================================================
+// PASSWORD RESET
+// ======================================================
+
+if (resetPasswordButton) {
+
+    resetPasswordButton.addEventListener(
+        "click",
+        async () => {
+
+            const email =
+                emailInput
+                    ? emailInput.value.trim()
+                    : "";
+
+
+            if (!email) {
+
+                setLoginMessage(
+                    "Enter your email address first.",
+                    true
+                );
+
+                return;
+
+            }
+
+
+            try {
+
+                await auth.sendPasswordResetEmail(
+                    email
+                );
+
+
+                setLoginMessage(
+                    "Password reset email sent.",
+                    false
+                );
+
 
             } catch (error) {
 
@@ -703,51 +736,11 @@ if (
                     error
                 );
 
-                alert(
-                    error.message ||
-                    "Password reset failed."
-                );
 
-            }
-
-        }
-    );
-
-}
-
-
-// ======================================================
-// LOGOUT
-// ======================================================
-
-if (exists(logoutButton)) {
-
-    logoutButton.addEventListener(
-        "click",
-        async function () {
-
-            try {
-
-                await signOut(auth);
-
-                currentUser =
-                    null;
-
-                currentMessages =
-                    [];
-
-                currentEntryId =
-                    null;
-
-                showStatus(
-                    "Logged out successfully."
-                );
-
-            } catch (error) {
-
-                showStatus(
-                    error.message ||
-                    "Logout failed.",
+                setLoginMessage(
+                    getFirebaseErrorMessage(
+                        error
+                    ),
                     true
                 );
 
@@ -758,526 +751,204 @@ if (exists(logoutButton)) {
 
 }
 
-
 // ======================================================
-// FIREBASE TOKEN
+// SHOW SIGNUP
 // ======================================================
 
-async function getIdToken() {
+if (showSignupButton) {
 
-    if (!currentUser) {
+    showSignupButton.addEventListener(
+        "click",
+        () => {
 
-        throw new Error(
-            "User is not logged in."
-        );
+            if (loginForm) {
 
-    }
+                hideElement(
+                    loginForm
+                );
 
-    return await currentUser.getIdToken(
-        true
+            }
+
+
+            if (signupForm) {
+
+                showElement(
+                    signupForm
+                );
+
+            }
+
+        }
     );
 
 }
 
+// ======================================================
+// SHOW LOGIN
+// ======================================================
+
+if (showLoginButton) {
+
+    showLoginButton.addEventListener(
+        "click",
+        () => {
+
+            if (signupForm) {
+
+                hideElement(
+                    signupForm
+                );
+
+            }
+
+
+            if (loginForm) {
+
+                showElement(
+                    loginForm
+                );
+
+            }
+
+        }
+    );
+
+}
 
 // ======================================================
-// API RESPONSE HELPER
+// LOAD JOURNAL ENTRIES
 // ======================================================
 
-async function readApiResponse(
-    response
-) {
+async function loadJournalEntries() {
 
-    const contentType =
-        response.headers.get(
-            "content-type"
-        ) || "";
+    try {
 
-    const text =
-        await response.text();
+        console.log(
+            "Loading journal entries..."
+        );
 
-    if (!text) {
 
-        return {};
-
-    }
-
-    if (
-        contentType
-            .toLowerCase()
-            .includes(
-                "application/json"
-            )
-    ) {
-
-        try {
-
-            return JSON.parse(
-                text
+        const data =
+            await apiRequest(
+                "/api/journal"
             );
 
-        } catch (error) {
 
-            throw new Error(
-                "Server returned invalid JSON."
-            );
+        console.log(
+            "Journal API response:",
+            data
+        );
+
+
+        // ==================================================
+        // IMPORTANT FIX
+        // ==================================================
+        //
+        // Backend returns:
+        //
+        // {
+        //     journals: [...],
+        //     count: 10
+        // }
+        //
+        // displayJournalEntries() needs the ARRAY.
+        //
+        // ==================================================
+
+        const entries =
+            Array.isArray(data)
+                ? data
+                : (
+                    Array.isArray(
+                        data.journals
+                    )
+                        ? data.journals
+                        : []
+                );
+
+
+        console.log(
+            "Journal entries loaded:",
+            entries.length
+        );
+
+
+        displayJournalEntries(
+            entries
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Load journals error:",
+            error
+        );
+
+
+        if (journalEntriesContainer) {
+
+            journalEntriesContainer.innerHTML = `
+
+                <p>
+                    Unable to load journal entries.
+                </p>
+
+            `;
 
         }
 
     }
 
-
-    if (
-        text.trim().startsWith(
-            "<!DOCTYPE"
-        ) ||
-        text.trim().startsWith(
-            "<html"
-        ) ||
-        text.includes(
-            "<!DOCTYPE html>"
-        )
-    ) {
-
-        throw new Error(
-            "Backend returned an HTML page instead of JSON. Please check the Render API."
-        );
-
-    }
-
-    throw new Error(
-        "Server returned an invalid response."
-    );
-
 }
 
-
 // ======================================================
-// AUTH STATE
-// ======================================================
-
-onAuthStateChanged(
-    auth,
-    async function (user) {
-
-        currentUser =
-            user;
-
-        if (user) {
-
-            if (exists(authStatus)) {
-
-                authStatus.textContent =
-                    "Logged in as: " +
-                    (
-                        user.email ||
-                        ""
-                    );
-
-            }
-
-            if (exists(loginButton)) {
-
-                loginButton.style.display =
-                    "none";
-
-            }
-
-            if (exists(signupButton)) {
-
-                signupButton.style.display =
-                    "none";
-
-            }
-
-            if (
-                exists(
-                    forgotPasswordButton
-                )
-            ) {
-
-                forgotPasswordButton.style.display =
-                    "none";
-
-            }
-
-            if (exists(logoutButton)) {
-
-                logoutButton.style.display =
-                    "inline-block";
-
-            }
-
-            if (
-                exists(
-                    newConversationButton
-                )
-            ) {
-
-                newConversationButton.disabled =
-                    false;
-
-            }
-
-            if (exists(chatInput)) {
-
-                chatInput.disabled =
-                    false;
-
-            }
-
-            if (exists(sendButton)) {
-
-                sendButton.disabled =
-                    false;
-
-            }
-
-            if (exists(journalInput)) {
-
-                journalInput.disabled =
-                    false;
-
-            }
-
-            if (exists(saveButton)) {
-
-                saveButton.disabled =
-                    false;
-
-            }
-
-            if (exists(clearButton)) {
-
-                clearButton.disabled =
-                    false;
-
-            }
-
-            if (
-                exists(
-                    saveJournalButton
-                )
-            ) {
-
-                saveJournalButton.disabled =
-                    false;
-
-            }
-
-            currentMessages =
-                [];
-
-            currentEntryId =
-                null;
-
-            if (exists(chatBox)) {
-
-                chatBox.innerHTML =
-                    "";
-
-            }
-
-            addGeminiMessage(
-                "Hello! I'm ready to help you."
-            );
-
-            await loadJournalEntries();
-
-        } else {
-
-            if (exists(authStatus)) {
-
-                authStatus.textContent =
-                    "Not logged in";
-
-            }
-
-            if (exists(loginButton)) {
-
-                loginButton.style.display =
-                    "inline-block";
-
-            }
-
-            if (exists(signupButton)) {
-
-                signupButton.style.display =
-                    "inline-block";
-
-            }
-
-            if (
-                exists(
-                    forgotPasswordButton
-                )
-            ) {
-
-                forgotPasswordButton.style.display =
-                    "inline-block";
-
-            }
-
-            if (exists(logoutButton)) {
-
-                logoutButton.style.display =
-                    "none";
-
-            }
-
-            if (
-                exists(
-                    newConversationButton
-                )
-            ) {
-
-                newConversationButton.disabled =
-                    true;
-
-            }
-
-            if (exists(chatInput)) {
-
-                chatInput.disabled =
-                    true;
-
-            }
-
-            if (exists(sendButton)) {
-
-                sendButton.disabled =
-                    true;
-
-            }
-
-            if (exists(journalInput)) {
-
-                journalInput.disabled =
-                    true;
-
-            }
-
-            if (exists(saveButton)) {
-
-                saveButton.disabled =
-                    true;
-
-            }
-
-            if (exists(clearButton)) {
-
-                clearButton.disabled =
-                    true;
-
-            }
-
-            if (
-                exists(
-                    saveJournalButton
-                )
-            ) {
-
-                saveJournalButton.disabled =
-                    true;
-
-            }
-
-            currentMessages =
-                [];
-
-            currentEntryId =
-                null;
-
-            if (exists(entriesList)) {
-
-                entriesList.innerHTML = `
-                    <p class="empty-message">
-                        Please login to view your journals.
-                    </p>
-                `;
-
-            }
-
-            if (exists(chatBox)) {
-
-                chatBox.innerHTML = `
-                    <div class="ai-message">
-                        <strong>Gemini:</strong>
-                        <p>
-                            Please login to start a conversation.
-                        </p>
-                    </div>
-                `;
-
-            }
-
-        }
-
-    }
-);
-
-
-// ======================================================
-// HTML ESCAPE
-// ======================================================
-
-function escapeHtml(
-    text
-) {
-
-    return String(
-        text ?? ""
-    )
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-
-}
-
-
-// ======================================================
-// MARKDOWN
-// ======================================================
-
-function renderMarkdown(
-    markdown
-) {
-
-    if (!markdown) {
-
-        return "";
-
-    }
-
-    const text =
-        escapeHtml(
-            markdown
-        );
-
-    return `
-        <div class="gemini-markdown">
-            <p>
-                ${text.replace(
-                    /\n/g,
-                    "<br>"
-                )}
-            </p>
-        </div>
-    `;
-
-}
-
-
-// ======================================================
-// USER MESSAGE
-// ======================================================
-
-function addUserMessage(
-    text
-) {
-
-    if (!exists(chatBox)) {
-
-        return;
-
-    }
-
-    const message =
-        document.createElement(
-            "div"
-        );
-
-    message.className =
-        "user-message";
-
-    message.innerHTML = `
-        <strong>You:</strong>
-        <p>
-            ${escapeHtml(text)}
-        </p>
-    `;
-
-    chatBox.appendChild(
-        message
-    );
-
-    chatBox.scrollTop =
-        chatBox.scrollHeight;
-
-}
-
-
-// ======================================================
-// GEMINI MESSAGE
-// ======================================================
-
-function addGeminiMessage(
-    text
-) {
-
-    if (!exists(chatBox)) {
-
-        return;
-
-    }
-
-    const message =
-        document.createElement(
-            "div"
-        );
-
-    message.className =
-        "ai-message";
-
-    message.innerHTML = `
-        <strong>Gemini:</strong>
-        ${renderMarkdown(text)}
-    `;
-
-    chatBox.appendChild(
-        message
-    );
-
-    chatBox.scrollTop =
-        chatBox.scrollHeight;
-
-}
-
-
-// ======================================================
-// CONVERT JOURNAL TO DISPLAY DATA
+// JOURNAL DISPLAY DATA
 // ======================================================
 
 function getJournalDisplayData(
     entry
 ) {
 
+    if (!entry) {
+
+        return {
+
+            title:
+                "Journal Entry",
+
+            content:
+                "",
+
+            preview:
+                "",
+
+            date:
+                "",
+
+            messages:
+                []
+
+        };
+
+    }
+
+
     let title =
-        entry.title ||
-        "";
+        typeof entry.title ===
+        "string"
+            ? entry.title.trim()
+            : "";
+
 
     let content =
-        entry.content ||
-        "";
+        typeof entry.content ===
+        "string"
+            ? entry.content
+            : "";
 
-    let messages =
+
+    const messages =
         Array.isArray(
             entry.messages
         )
@@ -1285,10 +956,68 @@ function getJournalDisplayData(
             : [];
 
 
-    // --------------------------------------------------
-    // Journals created by /api/chat
-    // contain messages but may not contain title/content.
-    // --------------------------------------------------
+    // ==================================================
+    // GENERATE TITLE FROM FIRST USER MESSAGE
+    // ==================================================
+
+    if (
+        (
+            !title ||
+            title === "Gemini Conversation"
+        ) &&
+        messages.length > 0
+    ) {
+
+        const firstUserMessage =
+            messages.find(
+                (message) =>
+                    message &&
+                    message.role === "user" &&
+                    typeof message.text ===
+                        "string"
+            );
+
+
+        if (
+            firstUserMessage &&
+            firstUserMessage.text.trim()
+        ) {
+
+            title =
+                firstUserMessage.text
+                    .trim()
+                    .substring(
+                        0,
+                        45
+                    );
+
+
+            if (
+                firstUserMessage.text
+                    .trim()
+                    .length > 45
+            ) {
+
+                title += "...";
+
+            }
+
+        }
+
+    }
+
+
+    if (!title) {
+
+        title =
+            "Journal Entry";
+
+    }
+
+
+    // ==================================================
+    // BUILD CONTENT FROM MESSAGES
+    // ==================================================
 
     if (
         !content &&
@@ -1298,7 +1027,7 @@ function getJournalDisplayData(
         content =
             messages
                 .map(
-                    function (message) {
+                    (message) => {
 
                         const role =
                             message.role ===
@@ -1306,13 +1035,14 @@ function getJournalDisplayData(
                                 ? "You"
                                 : "Gemini";
 
+                        const text =
+                            typeof message.text ===
+                            "string"
+                                ? message.text
+                                : "";
+
                         return (
-                            role +
-                            ": " +
-                            (
-                                message.text ||
-                                ""
-                            )
+                            `${role}: ${text}`
                         );
 
                     }
@@ -1324,83 +1054,58 @@ function getJournalDisplayData(
     }
 
 
-    // --------------------------------------------------
-    // Generate a useful title automatically.
-    // --------------------------------------------------
+    // ==================================================
+    // PREVIEW
+    // ==================================================
 
-    if (!title) {
-
-        const firstUserMessage =
-            messages.find(
-                function (message) {
-
-                    return (
-                        message &&
-                        message.role ===
-                            "user" &&
-                        typeof message.text ===
-                            "string" &&
-                        message.text.trim()
-                    );
-
-                }
-            );
-
-        if (
-            firstUserMessage
-        ) {
-
-            title =
-                firstUserMessage.text
-                    .trim()
-                    .substring(
-                        0,
-                        40
-                    );
-
-            if (
-                firstUserMessage.text
-                    .trim()
-                    .length > 40
-            ) {
-
-                title +=
-                    "...";
-
-            }
-
-        } else {
-
-            title =
-                "Gemini Conversation";
-
-        }
-
-    }
-
-
-    // --------------------------------------------------
-    // Preview
-    // --------------------------------------------------
-
-    let preview =
-        content
+    const preview =
+        String(
+            content || ""
+        )
             .replace(
                 /\s+/g,
                 " "
             )
-            .trim();
-
-    if (
-        preview.length > 100
-    ) {
-
-        preview =
-            preview.substring(
+            .trim()
+            .substring(
                 0,
-                100
-            ) +
-            "...";
+                120
+            );
+
+
+    // ==================================================
+    // DATE
+    // ==================================================
+
+    let date = "";
+
+
+    if (entry.createdAt) {
+
+        try {
+
+            const parsedDate =
+                new Date(
+                    entry.createdAt
+                );
+
+
+            if (
+                !Number.isNaN(
+                    parsedDate.getTime()
+                )
+            ) {
+
+                date =
+                    parsedDate.toLocaleString();
+
+            }
+
+        } catch (error) {
+
+            date = "";
+
+        }
 
     }
 
@@ -1416,6 +1121,9 @@ function getJournalDisplayData(
         preview:
             preview,
 
+        date:
+            date,
+
         messages:
             messages
 
@@ -1423,158 +1131,58 @@ function getJournalDisplayData(
 
 }
 
-
 // ======================================================
-// LOAD JOURNALS
-// ======================================================
-
-async function loadJournalEntries() {
-
-    if (!exists(entriesList)) {
-
-        return;
-
-    }
-
-    if (!currentUser) {
-
-        return;
-
-    }
-
-    try {
-
-        const token =
-            await getIdToken();
-
-        const response =
-            await fetch(
-                BACKEND_URL +
-                "/api/journal",
-                {
-                    method:
-                        "GET",
-
-                    headers: {
-
-                        "Authorization":
-                            "Bearer " +
-                            token
-
-                    }
-
-                }
-            );
-
-
-        const data =
-            await readApiResponse(
-                response
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                data.error ||
-                data.message ||
-                "Unable to load journals."
-            );
-
-        }
-
-
-        // --------------------------------------------------
-        // Support all expected response formats
-        // --------------------------------------------------
-
-        let entries =
-            [];
-
-        if (
-            Array.isArray(data)
-        ) {
-
-            entries =
-                data;
-
-        } else if (
-            data &&
-            Array.isArray(
-                data.journals
-            )
-        ) {
-
-            entries =
-                data.journals;
-
-        } else if (
-            data &&
-            Array.isArray(
-                data.entries
-            )
-        ) {
-
-            entries =
-                data.entries;
-
-        }
-
-
-        displayJournalEntries(
-            entries
-        );
-
-    } catch (error) {
-
-        console.error(
-            "Load journals error:",
-            error
-        );
-
-        entriesList.innerHTML = `
-            <p class="empty-message">
-                Unable to load journal entries.
-            </p>
-        `;
-
-        showStatus(
-            error.message ||
-            "Unable to load journal entries.",
-            true
-        );
-
-    }
-
-}
-
-
-// ======================================================
-// DISPLAY JOURNALS
+// DISPLAY JOURNAL ENTRIES
 // ======================================================
 
 function displayJournalEntries(
     entries
 ) {
 
-    if (!exists(entriesList)) {
+    if (!journalEntriesContainer) {
 
         return;
 
     }
 
-    entriesList.innerHTML =
+
+    journalEntriesContainer.innerHTML =
         "";
 
+
     if (
-        !Array.isArray(entries) ||
+        !Array.isArray(entries)
+    ) {
+
+        console.error(
+            "displayJournalEntries expected an array:",
+            entries
+        );
+
+
+        journalEntriesContainer.innerHTML = `
+
+            <p>
+                Unable to load journal entries.
+            </p>
+
+        `;
+
+        return;
+
+    }
+
+
+    if (
         entries.length === 0
     ) {
 
-        entriesList.innerHTML = `
-            <p class="empty-message">
+        journalEntriesContainer.innerHTML = `
+
+            <p>
                 No journal entries yet.
             </p>
+
         `;
 
         return;
@@ -1583,78 +1191,111 @@ function displayJournalEntries(
 
 
     entries.forEach(
-        function (entry) {
+        (entry) => {
 
             const displayData =
                 getJournalDisplayData(
                     entry
                 );
 
-            const item =
+
+            const card =
                 document.createElement(
                     "div"
                 );
 
-            item.className =
-                "journal-entry-item";
+
+            card.className =
+                "journal-entry";
 
 
-            item.innerHTML = `
-                <div class="journal-entry-title">
-                    ${escapeHtml(
-                        displayData.title
-                    )}
+            card.innerHTML = `
+
+                <div class="journal-entry-header">
+
+                    <h3>
+                        ${escapeHtml(
+                            displayData.title
+                        )}
+                    </h3>
+
+                    ${
+                        displayData.date
+                            ? `
+                                <small>
+                                    ${escapeHtml(
+                                        displayData.date
+                                    )}
+                                </small>
+                            `
+                            : ""
+                    }
+
                 </div>
 
-                <div class="journal-entry-preview">
+
+                <p>
                     ${escapeHtml(
-                        displayData.preview
+                        displayData.preview ||
+                        "No preview available."
                     )}
+                </p>
+
+
+                <div class="journal-entry-actions">
+
+                    <button
+                        type="button"
+                        class="open-journal-button"
+                    >
+                        Open
+                    </button>
+
+                    <button
+                        type="button"
+                        class="delete-journal-button"
+                    >
+                        Delete
+                    </button>
+
                 </div>
 
-                <button
-                    type="button"
-                    class="delete-entry-button">
-                    Delete
-                </button>
             `;
 
 
-            item.addEventListener(
-                "click",
-                function (event) {
-
-                    if (
-                        event.target.classList.contains(
-                            "delete-entry-button"
-                        )
-                    ) {
-
-                        return;
-
-                    }
-
-                    openJournalEntry(
-                        entry
-                    );
-
-                }
-            );
+            const openButton =
+                card.querySelector(
+                    ".open-journal-button"
+                );
 
 
             const deleteButton =
-                item.querySelector(
-                    ".delete-entry-button"
+                card.querySelector(
+                    ".delete-journal-button"
                 );
+
+
+            if (openButton) {
+
+                openButton.addEventListener(
+                    "click",
+                    () => {
+
+                        openJournalEntry(
+                            entry
+                        );
+
+                    }
+                );
+
+            }
 
 
             if (deleteButton) {
 
                 deleteButton.addEventListener(
                     "click",
-                    function (event) {
-
-                        event.stopPropagation();
+                    () => {
 
                         deleteJournalEntry(
                             entry.id
@@ -1666,8 +1307,8 @@ function displayJournalEntries(
             }
 
 
-            entriesList.appendChild(
-                item
+            journalEntriesContainer.appendChild(
+                card
             );
 
         }
@@ -1675,17 +1316,30 @@ function displayJournalEntries(
 
 }
 
-
 // ======================================================
-// OPEN JOURNAL
+// OPEN JOURNAL ENTRY
 // ======================================================
 
 function openJournalEntry(
     entry
 ) {
 
-    currentEntryId =
-        entry.id;
+    if (!entry) {
+
+        return;
+
+    }
+
+
+    console.log(
+        "Opening journal:",
+        entry
+    );
+
+
+    currentJournalId =
+        entry.id || null;
+
 
     const displayData =
         getJournalDisplayData(
@@ -1693,129 +1347,124 @@ function openJournalEntry(
         );
 
 
-    if (exists(journalTitle)) {
+    // ==================================================
+    // LOAD MESSAGES
+    // ==================================================
 
-        journalTitle.textContent =
+    if (
+        Array.isArray(
+            entry.messages
+        ) &&
+        entry.messages.length > 0
+    ) {
+
+        currentMessages =
+            entry.messages
+                .filter(
+                    (message) => {
+
+                        return (
+                            message &&
+                            (
+                                message.role ===
+                                    "user" ||
+                                message.role ===
+                                    "model"
+                            ) &&
+                            typeof message.text ===
+                                "string"
+                        );
+
+                    }
+                )
+                .map(
+                    (message) => {
+
+                        return {
+
+                            role:
+                                message.role,
+
+                            text:
+                                message.text
+
+                        };
+
+                    }
+                );
+
+    } else {
+
+        currentMessages = [];
+
+    }
+
+
+    renderMessages();
+
+
+    // ==================================================
+    // LOAD QUICK JOURNAL CONTENT
+    // ==================================================
+
+    if (journalTitleInput) {
+
+        journalTitleInput.value =
             displayData.title;
 
     }
 
-    if (exists(journalStatus)) {
 
-        journalStatus.textContent =
-            "Saved journal entry";
+    if (journalContentInput) {
 
-    }
-
-    if (exists(chatBox)) {
-
-        chatBox.innerHTML =
-            "";
-
-    }
-
-    currentMessages =
-        Array.isArray(
-            entry.messages
-        )
-            ? entry.messages.map(
-                function (message) {
-
-                    return {
-
-                        role:
-                            message.role,
-
-                        text:
-                            message.text ||
-                            ""
-
-                    };
-
-                }
-            )
-            : [];
-
-
-    // --------------------------------------------------
-    // If the journal contains structured messages,
-    // display them as an actual conversation.
-    // --------------------------------------------------
-
-    if (
-        currentMessages.length > 0
-    ) {
-
-        currentMessages.forEach(
-            function (message) {
-
-                if (
-                    message.role ===
-                    "user"
-                ) {
-
-                    addUserMessage(
-                        message.text
-                    );
-
-                } else {
-
-                    addGeminiMessage(
-                        message.text
-                    );
-
-                }
-
-            }
-        );
-
-    } else {
-
-        // ------------------------------------------------
-        // Manual journal without messages
-        // ------------------------------------------------
-
-        addUserMessage(
-            displayData.content
-        );
+        journalContentInput.value =
+            displayData.content;
 
     }
 
 
-    if (exists(chatInput)) {
+    if (journalMoodInput) {
 
-        chatInput.value =
-            "";
+        journalMoodInput.value =
+            entry.mood || "";
 
     }
+
+
+    window.scrollTo({
+
+        top:
+            0,
+
+        behavior:
+            "smooth"
+
+    });
 
 }
 
-
 // ======================================================
-// DELETE JOURNAL
+// DELETE JOURNAL ENTRY
 // ======================================================
 
 async function deleteJournalEntry(
-    id
+    journalId
 ) {
 
-    if (!id) {
-
-        showStatus(
-            "Invalid journal ID.",
-            true
-        );
+    if (!journalId) {
 
         return;
 
     }
 
-    if (
-        !confirm(
+
+    const confirmed =
+        window.confirm(
             "Delete this journal entry?"
-        )
-    ) {
+        );
+
+
+    if (!confirmed) {
 
         return;
 
@@ -1824,87 +1473,32 @@ async function deleteJournalEntry(
 
     try {
 
-        const token =
-            await getIdToken();
+        await apiRequest(
+            `/api/journal/${encodeURIComponent(
+                journalId
+            )}`,
+            {
 
-        const response =
-            await fetch(
-                BACKEND_URL +
-                `/api/journal/${encodeURIComponent(id)}`,
-                {
-                    method:
-                        "DELETE",
-
-                    headers: {
-
-                        "Authorization":
-                            "Bearer " +
-                            token
-
-                    }
-
-                }
-            );
-
-
-        const data =
-            await readApiResponse(
-                response
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                data.error ||
-                data.message ||
-                "Delete failed."
-            );
-
-        }
-
-
-        if (
-            currentEntryId ===
-            id
-        ) {
-
-            currentEntryId =
-                null;
-
-            currentMessages =
-                [];
-
-            if (exists(chatBox)) {
-
-                chatBox.innerHTML =
-                    "";
+                method:
+                    "DELETE"
 
             }
-
-            if (exists(journalTitle)) {
-
-                journalTitle.textContent =
-                    "New Gemini Journal";
-
-            }
-
-            if (exists(journalStatus)) {
-
-                journalStatus.textContent =
-                    "Start a new conversation";
-
-            }
-
-        }
-
-
-        showStatus(
-            "Journal entry deleted successfully."
         );
 
 
+        if (
+            currentJournalId ===
+            journalId
+        ) {
+
+            currentJournalId =
+                null;
+
+        }
+
+
         await loadJournalEntries();
+
 
     } catch (error) {
 
@@ -1913,103 +1507,139 @@ async function deleteJournalEntry(
             error
         );
 
-        showStatus(
+
+        alert(
             error.message ||
-            "Delete failed.",
-            true
+            "Failed to delete journal."
         );
 
     }
 
 }
 
-
 // ======================================================
-// RUN BUTTON
+// RENDER MESSAGES
 // ======================================================
 
-if (exists(sendButton)) {
+function renderMessages() {
 
-    sendButton.addEventListener(
-        "click",
-        async function (event) {
+    if (!messagesContainer) {
 
-            event.preventDefault();
+        return;
 
-            await sendMessage();
+    }
+
+
+    messagesContainer.innerHTML =
+        "";
+
+
+    if (
+        currentMessages.length ===
+        0
+    ) {
+
+        messagesContainer.innerHTML = `
+
+            <div class="welcome-message">
+
+                <strong>Gemini:</strong>
+
+                <p>
+                    Hello! I'm ready to help you.
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    currentMessages.forEach(
+        (message) => {
+
+            const messageDiv =
+                document.createElement(
+                    "div"
+                );
+
+
+            messageDiv.className =
+                message.role ===
+                    "user"
+                        ? "message user-message"
+                        : "message gemini-message";
+
+
+            const label =
+                message.role ===
+                    "user"
+                        ? "You"
+                        : "Gemini";
+
+
+            messageDiv.innerHTML = `
+
+                <strong>
+                    ${label}:
+                </strong>
+
+                <p>
+                    ${escapeHtml(
+                        message.text
+                    ).replace(
+                        /\n/g,
+                        "<br>"
+                    )}
+                </p>
+
+            `;
+
+
+            messagesContainer.appendChild(
+                messageDiv
+            );
 
         }
     );
 
-}
 
-
-// ======================================================
-// ENTER KEY
-// ======================================================
-
-if (exists(chatInput)) {
-
-    chatInput.addEventListener(
-        "keydown",
-        async function (event) {
-
-            if (
-                event.key ===
-                "Enter"
-            ) {
-
-                event.preventDefault();
-
-                await sendMessage();
-
-            }
-
-        }
-    );
+    messagesContainer.scrollTop =
+        messagesContainer.scrollHeight;
 
 }
 
-
 // ======================================================
-// SEND MESSAGE TO GEMINI
+// SEND GEMINI MESSAGE
 // ======================================================
 
 async function sendMessage() {
 
-    if (isSending) {
+    if (!messageInput) {
 
         return;
 
     }
 
-    if (!exists(chatInput)) {
+
+    const text =
+        messageInput.value.trim();
+
+
+    if (!text) {
 
         return;
 
     }
 
-    const message =
-        chatInput.value.trim();
-
-    if (!message) {
-
-        showStatus(
-            "Please enter a message.",
-            true
-        );
-
-        chatInput.focus();
-
-        return;
-
-    }
 
     if (!currentUser) {
 
-        showStatus(
-            "Please login first.",
-            true
+        alert(
+            "Please log in first."
         );
 
         return;
@@ -2018,37 +1648,7 @@ async function sendMessage() {
 
 
     // ==================================================
-    // START REQUEST
-    // ==================================================
-
-    isSending =
-        true;
-
-    chatInput.value =
-        "";
-
-    if (exists(sendButton)) {
-
-        sendButton.disabled =
-            true;
-
-        sendButton.textContent =
-            "Thinking...";
-
-    }
-
-
-    // ==================================================
-    // DISPLAY USER MESSAGE
-    // ==================================================
-
-    addUserMessage(
-        message
-    );
-
-
-    // ==================================================
-    // STORE USER MESSAGE
+    // ADD USER MESSAGE
     // ==================================================
 
     currentMessages.push({
@@ -2057,64 +1657,47 @@ async function sendMessage() {
             "user",
 
         text:
-            message
+            text
 
     });
 
 
+    messageInput.value =
+        "";
+
+
+    renderMessages();
+
+
     // ==================================================
-    // THINKING MESSAGE
+    // DISABLE BUTTON
     // ==================================================
 
-    const thinkingMessage =
-        document.createElement(
-            "div"
-        );
+    if (sendMessageButton) {
 
-    thinkingMessage.className =
-        "ai-message";
+        sendMessageButton.disabled =
+            true;
 
-    thinkingMessage.innerHTML = `
-        <strong>Gemini:</strong>
-        <p>Thinking...</p>
-    `;
-
-    if (exists(chatBox)) {
-
-        chatBox.appendChild(
-            thinkingMessage
-        );
-
-        chatBox.scrollTop =
-            chatBox.scrollHeight;
+        sendMessageButton.textContent =
+            "Thinking...";
 
     }
 
 
     try {
 
-        const token =
-            await getIdToken();
+        console.log(
+            "Sending Gemini request..."
+        );
 
 
-        const response =
-            await fetch(
-                BACKEND_URL +
+        const data =
+            await apiRequest(
                 "/api/chat",
                 {
+
                     method:
                         "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "application/json",
-
-                        "Authorization":
-                            "Bearer " +
-                            token
-
-                    },
 
                     body:
                         JSON.stringify({
@@ -2128,39 +1711,31 @@ async function sendMessage() {
             );
 
 
-        const data =
-            await readApiResponse(
-                response
-            );
+        console.log(
+            "Gemini response:",
+            data
+        );
 
 
-        if (!response.ok) {
+        const reply =
+            typeof data.response ===
+            "string"
+                ? data.response
+                : "";
+
+
+        if (!reply) {
 
             throw new Error(
-                data.error ||
-                data.message ||
-                "Gemini could not respond."
+                "Gemini returned an empty response."
             );
 
         }
 
 
-        if (
-            thinkingMessage &&
-            thinkingMessage.parentNode
-        ) {
-
-            thinkingMessage.remove();
-
-        }
-
-
-        const geminiText =
-            data.response ||
-            data.text ||
-            data.message ||
-            "Gemini did not return a response.";
-
+        // ==================================================
+        // ADD GEMINI RESPONSE
+        // ==================================================
 
         currentMessages.push({
 
@@ -2168,54 +1743,51 @@ async function sendMessage() {
                 "model",
 
             text:
-                geminiText
+                reply
 
         });
 
 
-        addGeminiMessage(
-            geminiText
-        );
-
-
-        // --------------------------------------------------
-        // Backend automatically saves this conversation.
-        // --------------------------------------------------
+        // ==================================================
+        // STORE JOURNAL ID
+        // ==================================================
 
         if (data.journalId) {
 
-            currentEntryId =
+            currentJournalId =
                 data.journalId;
 
         }
 
 
-        showStatus(
-            "Gemini responded successfully."
-        );
+        renderMessages();
 
 
-        // --------------------------------------------------
-        // Refresh journal list so the new conversation
-        // appears immediately.
-        // --------------------------------------------------
+        // ==================================================
+        // RELOAD JOURNALS
+        // ==================================================
 
         await loadJournalEntries();
+
 
     } catch (error) {
 
         console.error(
-            "Gemini error:",
+            "Gemini request error:",
             error
         );
 
 
+        // ==================================================
+        // REMOVE USER MESSAGE IF REQUEST FAILED
+        // ==================================================
+
         if (
-            currentMessages.length > 0 &&
+            currentMessages.length >
+            0 &&
             currentMessages[
                 currentMessages.length - 1
-            ].role ===
-            "user"
+            ].role === "user"
         ) {
 
             currentMessages.pop();
@@ -2223,59 +1795,56 @@ async function sendMessage() {
         }
 
 
-        if (
-            thinkingMessage &&
-            thinkingMessage.parentNode
-        ) {
+        renderMessages();
 
-            thinkingMessage.innerHTML = `
-                <strong>Gemini:</strong>
 
-                <p>
-                    Sorry, Gemini could not respond.
-                </p>
+        const errorText =
+            error.message ||
+            "Gemini could not respond.";
 
-                <small>
-                    ${escapeHtml(
-                        error.message ||
-                        "Unknown server error."
-                    )}
-                </small>
-            `;
 
-        } else {
+        const errorDiv =
+            document.createElement(
+                "div"
+            );
 
-            addGeminiMessage(
-                "Sorry, Gemini could not respond."
+
+        errorDiv.className =
+            "message gemini-message";
+
+
+        errorDiv.innerHTML = `
+
+            <strong>
+                Gemini:
+            </strong>
+
+            <p>
+                ${escapeHtml(
+                    errorText
+                )}
+            </p>
+
+        `;
+
+
+        if (messagesContainer) {
+
+            messagesContainer.appendChild(
+                errorDiv
             );
 
         }
 
-
-        showStatus(
-            error.message ||
-            "Gemini request failed.",
-            true
-        );
-
     } finally {
 
-        isSending =
-            false;
+        if (sendMessageButton) {
 
-        if (exists(sendButton)) {
-
-            sendButton.disabled =
+            sendMessageButton.disabled =
                 false;
 
-            sendButton.textContent =
-                "Run";
-
-        }
-
-        if (exists(chatInput)) {
-
-            chatInput.focus();
+            sendMessageButton.textContent =
+                "Send";
 
         }
 
@@ -2283,60 +1852,38 @@ async function sendMessage() {
 
 }
 
-
 // ======================================================
-// NEW CONVERSATION
+// SEND MESSAGE BUTTON
 // ======================================================
 
-if (
-    exists(
-        newConversationButton
-    )
-) {
+if (sendMessageButton) {
 
-    newConversationButton.addEventListener(
+    sendMessageButton.addEventListener(
         "click",
-        function (event) {
+        sendMessage
+    );
 
-            event.preventDefault();
+}
 
-            currentMessages =
-                [];
+// ======================================================
+// ENTER KEY TO SEND
+// ======================================================
 
-            currentEntryId =
-                null;
+if (messageInput) {
 
-            if (exists(journalTitle)) {
+    messageInput.addEventListener(
+        "keydown",
+        (event) => {
 
-                journalTitle.textContent =
-                    "New Gemini Journal";
+            if (
+                event.key ===
+                    "Enter" &&
+                !event.shiftKey
+            ) {
 
-            }
+                event.preventDefault();
 
-            if (exists(journalStatus)) {
-
-                journalStatus.textContent =
-                    "Start a new conversation";
-
-            }
-
-            if (exists(chatBox)) {
-
-                chatBox.innerHTML =
-                    "";
-
-            }
-
-            addGeminiMessage(
-                "Hello! I'm ready to help you."
-            );
-
-            if (exists(chatInput)) {
-
-                chatInput.value =
-                    "";
-
-                chatInput.focus();
+                sendMessage();
 
             }
 
@@ -2345,42 +1892,92 @@ if (
 
 }
 
+// ======================================================
+// NEW CONVERSATION
+// ======================================================
+
+if (newConversationButton) {
+
+    newConversationButton.addEventListener(
+        "click",
+        () => {
+
+            currentMessages =
+                [];
+
+            currentJournalId =
+                null;
+
+
+            renderMessages();
+
+
+            if (journalTitleInput) {
+
+                journalTitleInput.value =
+                    "";
+
+            }
+
+
+            if (journalContentInput) {
+
+                journalContentInput.value =
+                    "";
+
+            }
+
+
+            if (journalMoodInput) {
+
+                journalMoodInput.value =
+                    "";
+
+            }
+
+
+            if (messageInput) {
+
+                messageInput.value =
+                    "";
+
+                messageInput.focus();
+
+            }
+
+        }
+    );
+
+}
 
 // ======================================================
 // SAVE CONVERSATION
 // ======================================================
 
-if (
-    exists(
-        saveJournalButton
-    )
-) {
+if (saveJournalButton) {
 
     saveJournalButton.addEventListener(
         "click",
-        async function (event) {
+        async () => {
 
-            event.preventDefault();
+            if (!currentUser) {
+
+                alert(
+                    "Please log in first."
+                );
+
+                return;
+
+            }
+
 
             if (
                 currentMessages.length ===
                 0
             ) {
 
-                showStatus(
-                    "There is no conversation to save.",
-                    true
-                );
-
-                return;
-
-            }
-
-            if (!currentUser) {
-
-                showStatus(
-                    "Please login first.",
-                    true
+                alert(
+                    "There is no conversation to save."
                 );
 
                 return;
@@ -2388,73 +1985,69 @@ if (
             }
 
 
-            try {
+            const title =
+                journalTitleInput &&
+                journalTitleInput.value.trim()
+                    ? journalTitleInput.value.trim()
+                    : "Gemini Conversation";
 
-                const content =
-                    currentMessages
-                        .map(
-                            function (message) {
 
-                                const role =
-                                    message.role ===
+            const content =
+                currentMessages
+                    .map(
+                        (message) => {
+
+                            const label =
+                                message.role ===
                                     "user"
                                         ? "You"
                                         : "Gemini";
 
-                                return (
-                                    role +
-                                    ": " +
-                                    message.text
-                                );
+                            return (
+                                `${label}: ${message.text}`
+                            );
 
-                            }
-                        )
-                        .join(
-                            "\n\n"
-                        );
+                        }
+                    )
+                    .join(
+                        "\n\n"
+                    );
 
 
-                const token =
-                    await getIdToken();
+            try {
+
+                saveJournalButton.disabled =
+                    true;
 
 
-                const response =
-                    await fetch(
-                        BACKEND_URL +
+                saveJournalButton.textContent =
+                    "Saving...";
+
+
+                const data =
+                    await apiRequest(
                         "/api/journal",
                         {
+
                             method:
                                 "POST",
-
-                            headers: {
-
-                                "Content-Type":
-                                    "application/json",
-
-                                "Authorization":
-                                    "Bearer " +
-                                    token
-
-                            },
 
                             body:
                                 JSON.stringify({
 
                                     title:
-                                        journalTitle &&
-                                        journalTitle.textContent !==
-                                        "New Gemini Journal"
-                                            ? journalTitle.textContent
-                                            : "Gemini Conversation",
+                                        title,
 
                                     content:
                                         content,
 
-                                    messages:
-                                        currentMessages,
-
                                     mood:
-                                        null
+                                        journalMoodInput
+                                            ? journalMoodInput.value
+                                            : null,
+
+                                    messages:
+                                        currentMessages
 
                                 })
 
@@ -2462,37 +2055,27 @@ if (
                     );
 
 
-                const data =
-                    await readApiResponse(
-                        response
-                    );
-
-
-                if (!response.ok) {
-
-                    throw new Error(
-                        data.error ||
-                        data.message ||
-                        "Unable to save conversation."
-                    );
-
-                }
-
-
-                showStatus(
-                    "Conversation saved successfully."
+                console.log(
+                    "Conversation saved:",
+                    data
                 );
 
 
                 if (data.id) {
 
-                    currentEntryId =
+                    currentJournalId =
                         data.id;
 
                 }
 
 
                 await loadJournalEntries();
+
+
+                alert(
+                    "Conversation saved successfully."
+                );
+
 
             } catch (error) {
 
@@ -2501,11 +2084,21 @@ if (
                     error
                 );
 
-                showStatus(
+
+                alert(
                     error.message ||
-                    "Unable to save conversation.",
-                    true
+                    "Failed to save conversation."
                 );
+
+
+            } finally {
+
+                saveJournalButton.disabled =
+                    false;
+
+
+                saveJournalButton.textContent =
+                    "Save Conversation";
 
             }
 
@@ -2514,41 +2107,102 @@ if (
 
 }
 
+// ======================================================
+// CLEAR CURRENT CONVERSATION
+// ======================================================
+
+if (clearButton) {
+
+    clearButton.addEventListener(
+        "click",
+        () => {
+
+            const confirmed =
+                window.confirm(
+                    "Clear the current journal?"
+                );
+
+
+            if (!confirmed) {
+
+                return;
+
+            }
+
+
+            currentMessages =
+                [];
+
+            currentJournalId =
+                null;
+
+
+            if (journalTitleInput) {
+
+                journalTitleInput.value =
+                    "";
+
+            }
+
+
+            if (journalContentInput) {
+
+                journalContentInput.value =
+                    "";
+
+            }
+
+
+            if (journalMoodInput) {
+
+                journalMoodInput.value =
+                    "";
+
+            }
+
+
+            renderMessages();
+
+        }
+    );
+
+}
 
 // ======================================================
 // QUICK JOURNAL SAVE
 // ======================================================
 
-if (exists(saveButton)) {
+if (quickSaveButton) {
 
-    saveButton.addEventListener(
+    quickSaveButton.addEventListener(
         "click",
-        async function (event) {
-
-            event.preventDefault();
+        async () => {
 
             if (!currentUser) {
 
-                showStatus(
-                    "Please login first.",
-                    true
+                alert(
+                    "Please log in first."
                 );
 
                 return;
 
             }
 
+
             const content =
-                exists(journalInput)
-                    ? journalInput.value.trim()
+                quickJournalInput
+                    ? quickJournalInput.value.trim()
                     : "";
+
 
             if (!content) {
 
-                showStatus(
-                    "Please write something first.",
-                    true
-                );
+                if (quickJournalMessage) {
+
+                    quickJournalMessage.textContent =
+                        "Please write something first.";
+
+                }
 
                 return;
 
@@ -2557,40 +2211,42 @@ if (exists(saveButton)) {
 
             try {
 
-                const token =
-                    await getIdToken();
+                quickSaveButton.disabled =
+                    true;
 
 
-                const response =
-                    await fetch(
-                        BACKEND_URL +
+                quickSaveButton.textContent =
+                    "Saving...";
+
+
+                const title =
+                    journalTitleInput &&
+                    journalTitleInput.value.trim()
+                        ? journalTitleInput.value.trim()
+                        : "Quick Journal";
+
+
+                const data =
+                    await apiRequest(
                         "/api/journal",
                         {
+
                             method:
                                 "POST",
-
-                            headers: {
-
-                                "Content-Type":
-                                    "application/json",
-
-                                "Authorization":
-                                    "Bearer " +
-                                    token
-
-                            },
 
                             body:
                                 JSON.stringify({
 
                                     title:
-                                        "Quick Journal Entry",
+                                        title,
 
                                     content:
                                         content,
 
                                     mood:
-                                        null
+                                        journalMoodInput
+                                            ? journalMoodInput.value
+                                            : null
 
                                 })
 
@@ -2598,46 +2254,56 @@ if (exists(saveButton)) {
                     );
 
 
-                const data =
-                    await readApiResponse(
-                        response
-                    );
+                console.log(
+                    "Quick journal saved:",
+                    data
+                );
 
 
-                if (!response.ok) {
+                if (quickJournalMessage) {
 
-                    throw new Error(
-                        data.error ||
-                        data.message ||
-                        "Unable to save journal."
-                    );
+                    quickJournalMessage.textContent =
+                        "Journal saved successfully.";
 
                 }
 
 
-                journalInput.value =
-                    "";
+                if (quickJournalInput) {
 
+                    quickJournalInput.value =
+                        "";
 
-                showStatus(
-                    "Journal entry saved successfully."
-                );
+                }
 
 
                 await loadJournalEntries();
 
+
             } catch (error) {
 
                 console.error(
-                    "Quick journal error:",
+                    "Quick journal save error:",
                     error
                 );
 
-                showStatus(
-                    error.message ||
-                    "Unable to save journal.",
-                    true
-                );
+
+                if (quickJournalMessage) {
+
+                    quickJournalMessage.textContent =
+                        error.message ||
+                        "Failed to save journal.";
+
+                }
+
+
+            } finally {
+
+                quickSaveButton.disabled =
+                    false;
+
+
+                quickSaveButton.textContent =
+                    "Save Journal";
 
             }
 
@@ -2646,118 +2312,22 @@ if (exists(saveButton)) {
 
 }
 
-
 // ======================================================
-// CLEAR JOURNAL
+// INITIAL MESSAGE
 // ======================================================
 
-if (exists(clearButton)) {
-
-    clearButton.addEventListener(
-        "click",
-        function (event) {
-
-            event.preventDefault();
-
-            if (exists(journalInput)) {
-
-                journalInput.value =
-                    "";
-
-            }
-
-        }
-    );
-
-}
+renderMessages();
 
 
 // ======================================================
-// MODAL BACKDROP
-// ======================================================
-
-if (exists(authModal)) {
-
-    authModal.addEventListener(
-        "click",
-        function (event) {
-
-            if (
-                event.target ===
-                authModal
-            ) {
-
-                closeAuthModal();
-
-            }
-
-        }
-    );
-
-}
-
-
-// ======================================================
-// STARTUP
+// DEBUG INFORMATION
 // ======================================================
 
 console.log(
-    "================================="
+    "Personal Gemini Journal frontend loaded."
 );
 
 console.log(
-    "Personal Gemini Journal"
-);
-
-console.log(
-    "Frontend loaded successfully."
-);
-
-console.log(
-    "Firebase authentication connected."
-);
-
-console.log(
-    "Email/password authentication enabled."
-);
-
-console.log(
-    "Forgot Password enabled."
-);
-
-console.log(
-    "Render Gemini backend connected."
-);
-
-console.log(
-    "Backend URL:",
+    "Backend:",
     BACKEND_URL
-);
-
-console.log(
-    "Run button connected."
-);
-
-console.log(
-    "Conversation history enabled."
-);
-
-console.log(
-    "Journal saving enabled."
-);
-
-console.log(
-    "Journal loading enabled."
-);
-
-console.log(
-    "Journal deletion enabled."
-);
-
-console.log(
-    "Structured journal message display enabled."
-);
-
-console.log(
-    "================================="
 );
