@@ -1,11 +1,13 @@
 // ============================================================
 // PERSONAL GEMINI JOURNAL
-// Firebase Authentication + Render Backend + Gemini + Firestore
+// Firebase Authentication + Firestore Backend + Gemini
 // ============================================================
 
-// ------------------------------------------------------------
-// Firebase imports
-// ------------------------------------------------------------
+
+// ============================================================
+// FIREBASE IMPORTS
+// ============================================================
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
@@ -17,50 +19,40 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 
-// ------------------------------------------------------------
-// Firebase Web App Configuration
-// ------------------------------------------------------------
-// IMPORTANT:
-// Replace ONLY these 3 placeholder values with your actual
-// Firebase Web App configuration values.
-//
-// You can get them from:
-// Firebase Console
-// → Project settings
-// → Your apps
-// → Web app
-// → Firebase SDK snippet
-// ------------------------------------------------------------
+// ============================================================
+// FIREBASE CONFIGURATION
+// ============================================================
 
 const firebaseConfig = {
-    apiKey: "YOUR_FIREBASE_WEB_API_KEY",
+    apiKey: "AIzaSyD3FmIwW4SPCiRuq9kCshyvxbT_jJkAjr8",
     authDomain: "gemini-journal-8a53a.firebaseapp.com",
     projectId: "gemini-journal-8a53a",
     storageBucket: "gemini-journal-8a53a.firebasestorage.app",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_FIREBASE_APP_ID"
+    messagingSenderId: "1085820029335",
+    appId: "1:1085820029335:web:f744f8c2010beddcac1cd2"
 };
 
 
-// ------------------------------------------------------------
-// Initialize Firebase
-// ------------------------------------------------------------
+// ============================================================
+// INITIALIZE FIREBASE
+// ============================================================
 
 const firebaseApp = initializeApp(firebaseConfig);
+
 const auth = getAuth(firebaseApp);
 
 
-// ------------------------------------------------------------
-// Backend
-// ------------------------------------------------------------
+// ============================================================
+// RENDER BACKEND
+// ============================================================
 
 const BACKEND_URL =
     "https://secure-gemini-journal-tjdq.onrender.com";
 
 
-// ------------------------------------------------------------
-// DOM Elements
-// ------------------------------------------------------------
+// ============================================================
+// DOM ELEMENTS
+// ============================================================
 
 const loginButton =
     document.getElementById("loginButton");
@@ -111,25 +103,35 @@ const clearButton =
     document.getElementById("clearButton");
 
 
-// ------------------------------------------------------------
-// Application State
-// ------------------------------------------------------------
+// ============================================================
+// APPLICATION STATE
+// ============================================================
 
 let currentUser = null;
 
 let currentJournalId = null;
 
-let currentMessages = [
-    {
+let currentMessages = [];
+
+
+// ============================================================
+// INITIAL CONVERSATION
+// ============================================================
+
+function createWelcomeMessage() {
+
+    return {
         role: "model",
-        text: "Please login to start a conversation."
-    }
-];
+        text: currentUser
+            ? "Hello! I'm ready to help you."
+            : "Please login to start a conversation."
+    };
+}
 
 
-// ------------------------------------------------------------
-// Utility
-// ------------------------------------------------------------
+// ============================================================
+// STATUS MESSAGE
+// ============================================================
 
 function setStatus(message, type = "") {
 
@@ -147,9 +149,16 @@ function setStatus(message, type = "") {
 }
 
 
+// ============================================================
+// HTML ESCAPE
+// ============================================================
+
 function escapeHtml(value) {
 
-    if (value === null || value === undefined) {
+    if (
+        value === null ||
+        value === undefined
+    ) {
         return "";
     }
 
@@ -162,6 +171,10 @@ function escapeHtml(value) {
 }
 
 
+// ============================================================
+// DATE FORMAT
+// ============================================================
+
 function formatDate(value) {
 
     if (!value) {
@@ -172,7 +185,11 @@ function formatDate(value) {
 
         const date = new Date(value);
 
-        if (Number.isNaN(date.getTime())) {
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
             return "";
         }
 
@@ -185,30 +202,33 @@ function formatDate(value) {
 }
 
 
-// ------------------------------------------------------------
-// Firebase Token
-// ------------------------------------------------------------
+// ============================================================
+// GET FIREBASE TOKEN
+// ============================================================
 
 async function getFirebaseToken() {
 
     if (!currentUser) {
-        throw new Error("User is not logged in.");
+        throw new Error(
+            "Please login first."
+        );
     }
 
     return await currentUser.getIdToken(true);
 }
 
 
-// ------------------------------------------------------------
-// Backend API Request
-// ------------------------------------------------------------
+// ============================================================
+// API REQUEST
+// ============================================================
 
 async function apiRequest(
     endpoint,
     options = {}
 ) {
 
-    const token = await getFirebaseToken();
+    const token =
+        await getFirebaseToken();
 
     const headers = {
         "Content-Type": "application/json",
@@ -216,19 +236,24 @@ async function apiRequest(
         ...(options.headers || {})
     };
 
-    const response = await fetch(
-        `${BACKEND_URL}${endpoint}`,
-        {
-            ...options,
-            headers
-        }
-    );
+
+    const response =
+        await fetch(
+            `${BACKEND_URL}${endpoint}`,
+            {
+                ...options,
+                headers
+            }
+        );
+
 
     let data = null;
 
+
     try {
 
-        data = await response.json();
+        data =
+            await response.json();
 
     } catch (error) {
 
@@ -238,12 +263,14 @@ async function apiRequest(
 
     if (!response.ok) {
 
-        const message =
+        const errorMessage =
             data?.error ||
             data?.message ||
             `Request failed with status ${response.status}`;
 
-        throw new Error(message);
+        throw new Error(
+            errorMessage
+        );
     }
 
 
@@ -251,9 +278,9 @@ async function apiRequest(
 }
 
 
-// ------------------------------------------------------------
-// Authentication UI
-// ------------------------------------------------------------
+// ============================================================
+// UPDATE AUTHENTICATION UI
+// ============================================================
 
 function updateUIForAuth() {
 
@@ -262,68 +289,94 @@ function updateUIForAuth() {
         authStatus.textContent =
             `Logged in as: ${currentUser.email}`;
 
-        loginButton.style.display = "none";
 
-        signupButton.style.display = "none";
+        loginButton.style.display =
+            "none";
 
-        logoutButton.style.display = "inline-block";
+        signupButton.style.display =
+            "none";
 
-        newConversationButton.disabled = false;
+        logoutButton.style.display =
+            "inline-block";
 
-        chatInput.disabled = false;
 
-        sendButton.disabled = false;
+        newConversationButton.disabled =
+            false;
 
-        journalInput.disabled = false;
+        chatInput.disabled =
+            false;
 
-        saveButton.disabled = false;
+        sendButton.disabled =
+            false;
 
-        saveJournalButton.disabled = false;
+        journalInput.disabled =
+            false;
+
+        saveButton.disabled =
+            false;
+
+        saveJournalButton.disabled =
+            false;
 
     } else {
 
         authStatus.textContent =
             "Not logged in";
 
-        loginButton.style.display = "inline-block";
 
-        signupButton.style.display = "inline-block";
+        loginButton.style.display =
+            "inline-block";
 
-        logoutButton.style.display = "none";
+        signupButton.style.display =
+            "inline-block";
 
-        newConversationButton.disabled = true;
+        logoutButton.style.display =
+            "none";
 
-        chatInput.disabled = true;
 
-        sendButton.disabled = true;
+        newConversationButton.disabled =
+            true;
 
-        journalInput.disabled = true;
+        chatInput.disabled =
+            true;
 
-        saveButton.disabled = true;
+        sendButton.disabled =
+            true;
 
-        saveJournalButton.disabled = true;
+        journalInput.disabled =
+            true;
+
+        saveButton.disabled =
+            true;
+
+        saveJournalButton.disabled =
+            true;
     }
 }
 
 
-// ------------------------------------------------------------
-// Sign In
-// ------------------------------------------------------------
+// ============================================================
+// LOGIN
+// ============================================================
 
 async function handleLogin() {
 
-    const email = window.prompt(
-        "Enter your email:"
-    );
+    const email =
+        window.prompt(
+            "Enter your email:"
+        );
+
 
     if (!email) {
         return;
     }
 
 
-    const password = window.prompt(
-        "Enter your password:"
-    );
+    const password =
+        window.prompt(
+            "Enter your password:"
+        );
+
 
     if (!password) {
         return;
@@ -332,7 +385,10 @@ async function handleLogin() {
 
     try {
 
-        setStatus("Signing in...");
+        setStatus(
+            "Signing in..."
+        );
+
 
         await signInWithEmailAndPassword(
             auth,
@@ -340,7 +396,11 @@ async function handleLogin() {
             password
         );
 
-        setStatus("Signed in successfully.");
+
+        setStatus(
+            "Signed in successfully."
+        );
+
 
     } catch (error) {
 
@@ -349,36 +409,75 @@ async function handleLogin() {
             error
         );
 
+
+        let message =
+            error.message ||
+            "Unable to sign in.";
+
+
+        if (
+            error.code ===
+            "auth/invalid-credential"
+        ) {
+
+            message =
+                "Invalid email or password.";
+        }
+
+
+        if (
+            error.code ===
+            "auth/user-not-found"
+        ) {
+
+            message =
+                "No account found with this email.";
+        }
+
+
+        if (
+            error.code ===
+            "auth/wrong-password"
+        ) {
+
+            message =
+                "Incorrect password.";
+        }
+
+
         setStatus(
-            error.message || "Unable to sign in.",
+            message,
             "error"
         );
 
-        alert(
-            error.message || "Unable to sign in."
-        );
+
+        alert(message);
     }
 }
 
 
-// ------------------------------------------------------------
-// Create Account
-// ------------------------------------------------------------
+// ============================================================
+// SIGN UP
+// ============================================================
 
 async function handleSignup() {
 
-    const email = window.prompt(
-        "Enter your email:"
-    );
+    const email =
+        window.prompt(
+            "Enter your email:"
+        );
+
 
     if (!email) {
         return;
     }
 
 
-    const password = window.prompt(
-        "Create a password (minimum 6 characters):"
-    );
+    const password =
+        window.prompt(
+            "Create a password (minimum 6 characters):"
+        );
+
 
     if (!password) {
         return;
@@ -387,7 +486,10 @@ async function handleSignup() {
 
     try {
 
-        setStatus("Creating account...");
+        setStatus(
+            "Creating account..."
+        );
+
 
         await createUserWithEmailAndPassword(
             auth,
@@ -395,9 +497,11 @@ async function handleSignup() {
             password
         );
 
+
         setStatus(
             "Account created successfully."
         );
+
 
     } catch (error) {
 
@@ -406,21 +510,46 @@ async function handleSignup() {
             error
         );
 
+
+        let message =
+            error.message ||
+            "Unable to create account.";
+
+
+        if (
+            error.code ===
+            "auth/email-already-in-use"
+        ) {
+
+            message =
+                "An account already exists with this email.";
+        }
+
+
+        if (
+            error.code ===
+            "auth/weak-password"
+        ) {
+
+            message =
+                "Password must contain at least 6 characters.";
+        }
+
+
         setStatus(
-            error.message || "Unable to create account.",
+            message,
             "error"
         );
 
-        alert(
-            error.message || "Unable to create account."
-        );
+
+        alert(message);
     }
 }
 
 
-// ------------------------------------------------------------
-// Logout
-// ------------------------------------------------------------
+// ============================================================
+// LOGOUT
+// ============================================================
 
 async function handleLogout() {
 
@@ -434,15 +563,18 @@ async function handleLogout() {
 
         resetConversation();
 
+
         entriesList.innerHTML = `
             <p class="empty-message">
                 Please login to view your journals.
             </p>
         `;
 
+
         setStatus(
             "Logged out successfully."
         );
+
 
     } catch (error) {
 
@@ -450,6 +582,7 @@ async function handleLogout() {
             "Logout error:",
             error
         );
+
 
         setStatus(
             "Unable to logout.",
@@ -459,38 +592,37 @@ async function handleLogout() {
 }
 
 
-// ------------------------------------------------------------
-// Reset Conversation
-// ------------------------------------------------------------
+// ============================================================
+// RESET CONVERSATION
+// ============================================================
 
 function resetConversation() {
 
     currentJournalId = null;
 
+
     currentMessages = [
-        {
-            role: "model",
-            text: currentUser
-                ? "Hello! I'm ready to help you."
-                : "Please login to start a conversation."
-        }
+        createWelcomeMessage()
     ];
+
 
     journalTitle.textContent =
         "New Gemini Journal";
+
 
     journalStatus.textContent =
         currentUser
             ? "Start a new conversation"
             : "Login required";
 
+
     renderMessages();
 }
 
 
-// ------------------------------------------------------------
-// Render Chat
-// ------------------------------------------------------------
+// ============================================================
+// RENDER CHAT MESSAGES
+// ============================================================
 
 function renderMessages() {
 
@@ -516,9 +648,14 @@ function renderMessages() {
                 wrapper.className =
                     "user-message";
 
+
                 wrapper.innerHTML = `
                     <strong>You:</strong>
-                    <p>${escapeHtml(message.text)}</p>
+                    <p>
+                        ${escapeHtml(
+                            message.text
+                        )}
+                    </p>
                 `;
 
             } else {
@@ -526,14 +663,21 @@ function renderMessages() {
                 wrapper.className =
                     "ai-message";
 
+
                 wrapper.innerHTML = `
                     <strong>Gemini:</strong>
-                    <p>${escapeHtml(message.text)}</p>
+                    <p>
+                        ${escapeHtml(
+                            message.text
+                        )}
+                    </p>
                 `;
             }
 
 
-            chatBox.appendChild(wrapper);
+            chatBox.appendChild(
+                wrapper
+            );
         }
     );
 
@@ -543,9 +687,9 @@ function renderMessages() {
 }
 
 
-// ------------------------------------------------------------
-// Send Chat Message
-// ------------------------------------------------------------
+// ============================================================
+// SEND MESSAGE TO GEMINI
+// ============================================================
 
 async function sendMessage() {
 
@@ -568,15 +712,11 @@ async function sendMessage() {
     }
 
 
-    const userMessage = {
+    currentMessages.push({
         role: "user",
-        text
-    };
+        text: text
+    });
 
-
-    currentMessages.push(
-        userMessage
-    );
 
     renderMessages();
 
@@ -586,6 +726,7 @@ async function sendMessage() {
     chatInput.disabled = true;
 
     sendButton.disabled = true;
+
 
     setStatus(
         "Gemini is thinking..."
@@ -599,10 +740,13 @@ async function sendMessage() {
                 "/api/chat",
                 {
                     method: "POST",
-                    body: JSON.stringify({
-                        message: text,
-                        messages: currentMessages
-                    })
+
+                    body:
+                        JSON.stringify({
+                            message: text,
+                            messages:
+                                currentMessages
+                        })
                 }
             );
 
@@ -646,6 +790,7 @@ async function sendMessage() {
             "Gemini responded."
         );
 
+
     } catch (error) {
 
         console.error(
@@ -670,20 +815,23 @@ async function sendMessage() {
             "error"
         );
 
+
     } finally {
 
-        chatInput.disabled = false;
+        chatInput.disabled =
+            false;
 
-        sendButton.disabled = false;
+        sendButton.disabled =
+            false;
 
         chatInput.focus();
     }
 }
 
 
-// ------------------------------------------------------------
-// Load Journal Entries
-// ------------------------------------------------------------
+// ============================================================
+// LOAD JOURNALS
+// ============================================================
 
 async function loadJournalEntries() {
 
@@ -717,23 +865,31 @@ async function loadJournalEntries() {
         let entries = [];
 
 
-        if (Array.isArray(data)) {
+        if (
+            Array.isArray(data)
+        ) {
 
             entries = data;
 
         } else if (
             data &&
-            Array.isArray(data.journals)
+            Array.isArray(
+                data.journals
+            )
         ) {
 
-            entries = data.journals;
+            entries =
+                data.journals;
 
         } else if (
             data &&
-            Array.isArray(data.entries)
+            Array.isArray(
+                data.entries
+            )
         ) {
 
-            entries = data.entries;
+            entries =
+                data.entries;
         }
 
 
@@ -756,6 +912,7 @@ async function loadJournalEntries() {
             </p>
         `;
 
+
         setStatus(
             error.message ||
             "Unable to load journals.",
@@ -765,9 +922,9 @@ async function loadJournalEntries() {
 }
 
 
-// ------------------------------------------------------------
-// Display Journal Entries
-// ------------------------------------------------------------
+// ============================================================
+// DISPLAY JOURNALS
+// ============================================================
 
 function displayJournalEntries(
     entries
@@ -798,11 +955,15 @@ function displayJournalEntries(
         (entry) => {
 
             const journal =
-                normalizeJournal(entry);
+                normalizeJournal(
+                    entry
+                );
 
 
             const item =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
 
 
             item.className =
@@ -823,8 +984,11 @@ function displayJournalEntries(
 
             item.innerHTML = `
                 <div class="journal-entry-content">
+
                     <h3>
-                        ${escapeHtml(title)}
+                        ${escapeHtml(
+                            title
+                        )}
                     </h3>
 
                     <p>
@@ -843,20 +1007,25 @@ function displayJournalEntries(
                             )
                         )}
                     </small>
+
                 </div>
 
                 <div class="journal-entry-actions">
 
                     <button
                         class="secondary-button open-journal-button"
-                        data-id="${escapeHtml(journal.id)}"
+                        data-id="${escapeHtml(
+                            journal.id
+                        )}"
                     >
                         Open
                     </button>
 
                     <button
                         class="secondary-button delete-journal-button"
-                        data-id="${escapeHtml(journal.id)}"
+                        data-id="${escapeHtml(
+                            journal.id
+                        )}"
                     >
                         Delete
                     </button>
@@ -883,10 +1052,9 @@ function displayJournalEntries(
                     "click",
                     () => {
 
-                        const id =
-                            button.dataset.id;
-
-                        openJournal(id);
+                        openJournal(
+                            button.dataset.id
+                        );
                     }
                 );
             }
@@ -904,10 +1072,9 @@ function displayJournalEntries(
                     "click",
                     () => {
 
-                        const id =
-                            button.dataset.id;
-
-                        deleteJournal(id);
+                        deleteJournal(
+                            button.dataset.id
+                        );
                     }
                 );
             }
@@ -915,9 +1082,9 @@ function displayJournalEntries(
 }
 
 
-// ------------------------------------------------------------
-// Normalize Journal
-// ------------------------------------------------------------
+// ============================================================
+// NORMALIZE JOURNAL
+// ============================================================
 
 function normalizeJournal(
     journal
@@ -973,17 +1140,20 @@ function normalizeJournal(
             "",
 
         title:
-            typeof journal.title === "string"
+            typeof journal.title ===
+            "string"
                 ? journal.title
                 : "",
 
         content:
-            typeof journal.content === "string"
+            typeof journal.content ===
+            "string"
                 ? journal.content
                 : "",
 
         mood:
-            typeof journal.mood === "string"
+            typeof journal.mood ===
+            "string"
                 ? journal.mood
                 : "",
 
@@ -997,9 +1167,9 @@ function normalizeJournal(
 }
 
 
-// ------------------------------------------------------------
-// Conversation Preview
-// ------------------------------------------------------------
+// ============================================================
+// CONVERSATION PREVIEW
+// ============================================================
 
 function getConversationPreview(
     messages
@@ -1021,9 +1191,9 @@ function getConversationPreview(
 }
 
 
-// ------------------------------------------------------------
-// Truncate Text
-// ------------------------------------------------------------
+// ============================================================
+// TRUNCATE TEXT
+// ============================================================
 
 function truncateText(
     text,
@@ -1040,7 +1210,8 @@ function truncateText(
 
 
     if (
-        value.length <= maxLength
+        value.length <=
+        maxLength
     ) {
 
         return value;
@@ -1056,9 +1227,9 @@ function truncateText(
 }
 
 
-// ------------------------------------------------------------
-// Open Journal
-// ------------------------------------------------------------
+// ============================================================
+// OPEN JOURNAL
+// ============================================================
 
 async function openJournal(
     journalId
@@ -1083,7 +1254,9 @@ async function openJournal(
 
         const data =
             await apiRequest(
-                `/api/journal/${encodeURIComponent(journalId)}`
+                `/api/journal/${encodeURIComponent(
+                    journalId
+                )}`
             );
 
 
@@ -1105,7 +1278,8 @@ async function openJournal(
                 : [
                     {
                         role: "model",
-                        text: "This journal has no conversation messages."
+                        text:
+                            "This journal has no conversation messages."
                     }
                 ];
 
@@ -1144,9 +1318,9 @@ async function openJournal(
 }
 
 
-// ------------------------------------------------------------
-// Delete Journal
-// ------------------------------------------------------------
+// ============================================================
+// DELETE JOURNAL
+// ============================================================
 
 async function deleteJournal(
     journalId
@@ -1176,7 +1350,9 @@ async function deleteJournal(
 
 
         await apiRequest(
-            `/api/journal/${encodeURIComponent(journalId)}`,
+            `/api/journal/${encodeURIComponent(
+                journalId
+            )}`,
             {
                 method: "DELETE"
             }
@@ -1217,9 +1393,9 @@ async function deleteJournal(
 }
 
 
-// ------------------------------------------------------------
-// Save Conversation
-// ------------------------------------------------------------
+// ============================================================
+// SAVE GEMINI CONVERSATION
+// ============================================================
 
 async function saveConversation() {
 
@@ -1251,7 +1427,9 @@ async function saveConversation() {
     const defaultTitle =
         currentJournalId
             ? journalTitle.textContent
-            : `Gemini Journal - ${new Date().toLocaleDateString()}`;
+            : `Gemini Journal - ${
+                new Date().toLocaleDateString()
+            }`;
 
 
     const title =
@@ -1271,6 +1449,7 @@ async function saveConversation() {
         saveJournalButton.disabled =
             true;
 
+
         setStatus(
             "Saving conversation..."
         );
@@ -1281,16 +1460,23 @@ async function saveConversation() {
                 "/api/journal",
                 {
                     method: "POST",
-                    body: JSON.stringify({
-                        title: title.trim(),
-                        content:
-                            getConversationPreview(
+
+                    body:
+                        JSON.stringify({
+
+                            title:
+                                title.trim(),
+
+                            content:
+                                getConversationPreview(
+                                    currentMessages
+                                ),
+
+                            mood: "",
+
+                            messages:
                                 currentMessages
-                            ),
-                        mood: "",
-                        messages:
-                            currentMessages
-                    })
+                        })
                 }
             );
 
@@ -1331,6 +1517,7 @@ async function saveConversation() {
             "error"
         );
 
+
     } finally {
 
         saveJournalButton.disabled =
@@ -1339,9 +1526,9 @@ async function saveConversation() {
 }
 
 
-// ------------------------------------------------------------
-// Quick Journal Save
-// ------------------------------------------------------------
+// ============================================================
+// SAVE QUICK JOURNAL
+// ============================================================
 
 async function saveQuickJournal() {
 
@@ -1369,6 +1556,18 @@ async function saveQuickJournal() {
     }
 
 
+    const title =
+        window.prompt(
+            "Enter a title for this journal entry:",
+            "Quick Journal Entry"
+        );
+
+
+    if (!title) {
+        return;
+    }
+
+
     try {
 
         saveButton.disabled =
@@ -1380,41 +1579,28 @@ async function saveQuickJournal() {
         );
 
 
-        const title =
-            window.prompt(
-                "Enter a title for this journal entry:",
-                "Quick Journal Entry"
-            );
-
-
-        if (!title) {
-
-            saveButton.disabled =
-                false;
-
-            return;
-        }
-
-
         await apiRequest(
             "/api/journal",
             {
                 method: "POST",
-                body: JSON.stringify({
-                    title:
-                        title.trim(),
 
-                    content,
+                body:
+                    JSON.stringify({
 
-                    mood: "",
+                        title:
+                            title.trim(),
 
-                    messages: [
-                        {
-                            role: "user",
-                            text: content
-                        }
-                    ]
-                })
+                        content,
+
+                        mood: "",
+
+                        messages: [
+                            {
+                                role: "user",
+                                text: content
+                            }
+                        ]
+                    })
             }
         );
 
@@ -1444,6 +1630,7 @@ async function saveQuickJournal() {
             "error"
         );
 
+
     } finally {
 
         saveButton.disabled =
@@ -1452,25 +1639,27 @@ async function saveQuickJournal() {
 }
 
 
-// ------------------------------------------------------------
-// New Conversation
-// ------------------------------------------------------------
+// ============================================================
+// NEW CONVERSATION
+// ============================================================
 
 function handleNewConversation() {
 
     resetConversation();
 
+
     setStatus(
         "New conversation started."
     );
+
 
     chatInput.focus();
 }
 
 
-// ------------------------------------------------------------
-// Event Listeners
-// ------------------------------------------------------------
+// ============================================================
+// EVENT LISTENERS
+// ============================================================
 
 loginButton.addEventListener(
     "click",
@@ -1543,9 +1732,9 @@ chatInput.addEventListener(
 );
 
 
-// ------------------------------------------------------------
-// Firebase Authentication State
-// ------------------------------------------------------------
+// ============================================================
+// FIREBASE AUTH STATE
+// ============================================================
 
 onAuthStateChanged(
     auth,
@@ -1576,6 +1765,7 @@ onAuthStateChanged(
 
             resetConversation();
 
+
             entriesList.innerHTML = `
                 <p class="empty-message">
                     Please login to view your journals.
@@ -1586,24 +1776,29 @@ onAuthStateChanged(
 );
 
 
-// ------------------------------------------------------------
-// Initial UI
-// ------------------------------------------------------------
+// ============================================================
+// INITIAL UI
+// ============================================================
+
+currentMessages = [
+    createWelcomeMessage()
+];
 
 updateUIForAuth();
 
 renderMessages();
 
-console.log(
-    "Personal Gemini Journal frontend initialized."
-);
 
 console.log(
-    "Backend:",
-    BACKEND_URL
+    "Personal Gemini Journal initialized successfully."
 );
 
 console.log(
     "Firebase project:",
     firebaseConfig.projectId
+);
+
+console.log(
+    "Backend:",
+    BACKEND_URL
 );
