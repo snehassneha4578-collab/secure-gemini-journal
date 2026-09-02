@@ -57,11 +57,33 @@ app.use(express.json());
 
 
 // ======================================================
-// FRONTEND STATIC FILES
+// GEMINI API
 // ======================================================
 
-// If public/index.html exists,
-// Express can serve the frontend.
+const geminiApiKey = process.env.GEMINI_API_KEY;
+
+if (!geminiApiKey) {
+
+    console.error(
+        "ERROR: GEMINI_API_KEY is missing."
+    );
+
+} else {
+
+    console.log(
+        "Gemini API key loaded successfully."
+    );
+
+}
+
+const ai = new GoogleGenAI({
+    apiKey: geminiApiKey
+});
+
+
+// ======================================================
+// SERVE FRONTEND
+// ======================================================
 
 app.use(
     express.static(
@@ -71,27 +93,37 @@ app.use(
 
 
 // ======================================================
-// GEMINI API
+// HOME PAGE
 // ======================================================
 
-const geminiApiKey =
-    process.env.GEMINI_API_KEY;
+app.get("/", (req, res) => {
 
-if (!geminiApiKey) {
+    const indexPath =
+        path.join(
+            __dirname,
+            "public",
+            "index.html"
+        );
 
-    console.error(
-        "ERROR: GEMINI_API_KEY is missing from .env"
-    );
+    res.sendFile(indexPath);
 
-    process.exit(1);
-}
+});
 
-console.log(
-    "Gemini API key loaded successfully."
-);
 
-const ai = new GoogleGenAI({
-    apiKey: geminiApiKey
+// ======================================================
+// HEALTH CHECK
+// ======================================================
+
+app.get("/health", (req, res) => {
+
+    res.status(200).json({
+
+        status: "healthy",
+
+        message: "Backend is working"
+
+    });
+
 });
 
 
@@ -99,11 +131,7 @@ const ai = new GoogleGenAI({
 // FIREBASE AUTHENTICATION MIDDLEWARE
 // ======================================================
 
-async function authenticateUser(
-    req,
-    res,
-    next
-) {
+async function authenticateUser(req, res, next) {
 
     try {
 
@@ -121,15 +149,17 @@ async function authenticateUser(
         ) {
 
             return res.status(401).json({
+
                 error:
                     "Authentication token required."
+
             });
 
         }
 
 
         // ------------------------------------------------
-        // EXTRACT ID TOKEN
+        // GET TOKEN
         // ------------------------------------------------
 
         const idToken =
@@ -139,28 +169,30 @@ async function authenticateUser(
         if (!idToken) {
 
             return res.status(401).json({
+
                 error:
                     "Authentication token is missing."
+
             });
 
         }
 
 
         // ------------------------------------------------
-        // VERIFY FIREBASE TOKEN
+        // VERIFY FIREBASE ID TOKEN
         // ------------------------------------------------
 
         const decodedToken =
-            await auth.verifyIdToken(
-                idToken
-            );
+            await auth.verifyIdToken(idToken);
 
 
         // ------------------------------------------------
         // STORE VERIFIED USER
         // ------------------------------------------------
 
-        req.user = decodedToken;
+        req.user =
+            decodedToken;
+
 
         console.log(
             "Authenticated UID:",
@@ -174,12 +206,14 @@ async function authenticateUser(
 
         console.error(
             "Authentication error:",
-            error
+            error.message
         );
 
         return res.status(401).json({
+
             error:
                 "Invalid or expired authentication token."
+
         });
 
     }
@@ -188,120 +222,7 @@ async function authenticateUser(
 
 
 // ======================================================
-// HOME / HEALTH CHECK
-// ======================================================
-
-app.get(
-    "/",
-    (req, res) => {
-
-        res.send(`
-<!DOCTYPE html>
-
-<html>
-
-<head>
-
-<meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
-
-<title>Personal Gemini Journal</title>
-
-<style>
-
-body {
-
-    font-family: Arial, sans-serif;
-
-    text-align: center;
-
-    margin-top: 100px;
-
-    background: #f5f7fb;
-
-}
-
-h1 {
-
-    color: #333;
-
-}
-
-.status {
-
-    display: inline-block;
-
-    padding: 15px 25px;
-
-    background: #e8f5e9;
-
-    color: #2e7d32;
-
-    border-radius: 10px;
-
-    font-size: 18px;
-
-}
-
-</style>
-
-</head>
-
-<body>
-
-<h1>
-Personal Gemini Journal
-</h1>
-
-<div class="status">
-
-✅ Backend is running successfully
-
-</div>
-
-<p>
-Port: ${PORT}
-</p>
-
-<p>
-Firebase + Gemini + Firestore connected.
-</p>
-
-</body>
-
-</html>
-        `);
-
-    }
-);
-
-
-// ======================================================
-// POST /api/chat
-// ======================================================
-//
-// Frontend sends:
-//
-// {
-//     "messages": [
-//         {
-//             "role": "user",
-//             "text": "Hello"
-//         }
-//     ]
-// }
-//
-// Backend:
-// 1. Verifies Firebase token
-// 2. Gets verified UID
-// 3. Sends conversation to Gemini
-// 4. Saves journal to Firestore
-// 5. Returns Gemini response
-//
+// GEMINI CHAT - MULTI TURN
 // ======================================================
 
 app.post(
@@ -309,16 +230,36 @@ app.post(
     authenticateUser,
     async (req, res) => {
 
+        console.log(
+            "Gemini request received."
+        );
+
         try {
+
+            // --------------------------------------------
+            // CHECK GEMINI API KEY
+            // --------------------------------------------
+
+            if (!geminiApiKey) {
+
+                return res.status(500).json({
+
+                    error:
+                        "GEMINI_API_KEY is missing."
+
+                });
+
+            }
+
+
+            // --------------------------------------------
+            // GET MESSAGES
+            // --------------------------------------------
 
             const {
                 messages
             } = req.body;
 
-
-            // ------------------------------------------------
-            // CHECK MESSAGES
-            // ------------------------------------------------
 
             if (
                 !Array.isArray(messages) ||
@@ -326,59 +267,47 @@ app.post(
             ) {
 
                 return res.status(400).json({
+
                     error:
-                        "Messages are required."
+                        "No messages were provided."
+
                 });
 
             }
 
 
-            // ------------------------------------------------
-            // VERIFIED UID
-            // ------------------------------------------------
-
-            const uid =
-                req.user.uid;
-
-            console.log(
-                "Processing chat for UID:",
-                uid
-            );
-
-
-            // ------------------------------------------------
+            // --------------------------------------------
             // CLEAN MESSAGE HISTORY
-            // ------------------------------------------------
+            // --------------------------------------------
 
             const cleanMessages =
                 messages
+                    .filter((message) => {
 
-                    .filter(
-                        (item) => {
+                        return (
+                            message &&
+                            (
+                                message.role === "user" ||
+                                message.role === "model"
+                            ) &&
+                            typeof message.text === "string" &&
+                            message.text.trim()
+                        );
 
-                            return (
-                                item &&
-                                (
-                                    item.role === "user" ||
-                                    item.role === "model"
-                                ) &&
-                                typeof item.text === "string" &&
-                                item.text.trim()
-                            );
+                    })
+                    .map((message) => {
 
-                        }
-                    )
+                        return {
 
-                    .map(
-                        (item) => ({
-
-                            role: item.role,
+                            role:
+                                message.role,
 
                             text:
-                                item.text.trim()
+                                message.text.trim()
 
-                        })
-                    );
+                        };
+
+                    });
 
 
             if (
@@ -386,43 +315,50 @@ app.post(
             ) {
 
                 return res.status(400).json({
+
                     error:
-                        "No valid messages were provided."
+                        "Conversation is empty."
+
                 });
 
             }
 
 
-            // ------------------------------------------------
-            // CONVERT TO GEMINI FORMAT
-            // ------------------------------------------------
-
-            const contents =
-                cleanMessages.map(
-                    (item) => ({
-
-                        role: item.role,
-
-                        parts: [
-                            {
-                                text: item.text
-                            }
-                        ]
-
-                    })
-                );
-
-
             console.log(
-                "Sending",
-                contents.length,
-                "messages to Gemini..."
+                "Conversation messages:",
+                cleanMessages.length
             );
 
 
-            // ------------------------------------------------
+            // --------------------------------------------
+            // CONVERT TO GEMINI FORMAT
+            // --------------------------------------------
+
+            const contents =
+                cleanMessages.map((message) => {
+
+                    return {
+
+                        role:
+                            message.role,
+
+                        parts: [
+
+                            {
+                                text:
+                                    message.text
+                            }
+
+                        ]
+
+                    };
+
+                });
+
+
+            // --------------------------------------------
             // CALL GEMINI
-            // ------------------------------------------------
+            // --------------------------------------------
 
             const response =
                 await ai.models.generateContent({
@@ -436,52 +372,62 @@ app.post(
                 });
 
 
+            // --------------------------------------------
+            // GET RESPONSE
+            // --------------------------------------------
+
             const reply =
                 response.text;
 
-
-            // ------------------------------------------------
-            // CHECK GEMINI RESPONSE
-            // ------------------------------------------------
 
             if (
                 !reply ||
                 !reply.trim()
             ) {
 
-                throw new Error(
-                    "Gemini returned an empty response."
-                );
+                return res.status(500).json({
+
+                    error:
+                        "Gemini returned an empty response."
+
+                });
 
             }
 
 
             console.log(
-                "Gemini response received successfully."
+                "Gemini response received."
             );
 
 
-            // ------------------------------------------------
-            // COMPLETE CONVERSATION
-            // ------------------------------------------------
+            // --------------------------------------------
+            // SAVE COMPLETE CONVERSATION
+            // --------------------------------------------
 
             const completeMessages = [
 
                 ...cleanMessages,
 
                 {
-                    role: "model",
+
+                    role:
+                        "model",
 
                     text:
                         reply.trim()
+
                 }
 
             ];
 
 
-            // ------------------------------------------------
-            // SAVE TO FIRESTORE
-            // ------------------------------------------------
+            // --------------------------------------------
+            // SAVE JOURNAL TO FIRESTORE
+            // --------------------------------------------
+
+            const uid =
+                req.user.uid;
+
 
             const journalRef =
                 await db
@@ -507,16 +453,16 @@ app.post(
 
 
             console.log(
-                "Journal saved successfully:",
+                "Journal saved:",
                 journalRef.id
             );
 
 
-            // ------------------------------------------------
-            // SEND RESPONSE
-            // ------------------------------------------------
+            // --------------------------------------------
+            // RETURN RESPONSE
+            // --------------------------------------------
 
-            res.json({
+            return res.json({
 
                 response:
                     reply.trim(),
@@ -529,13 +475,28 @@ app.post(
         } catch (error) {
 
             console.error(
-                "Chat error:",
+                "================================="
+            );
+
+            console.error(
+                "CHAT ERROR"
+            );
+
+            console.error(
                 error
             );
 
-            res.status(500).json({
+            console.error(
+                "================================="
+            );
+
+
+            return res.status(500).json({
+
                 error:
+                    error.message ||
                     "Failed to process your request."
+
             });
 
         }
@@ -545,104 +506,117 @@ app.post(
 
 
 // ======================================================
-// GET /api/journals
+// GET JOURNALS
 // ======================================================
-//
-// Returns journals ONLY for the
-// authenticated Firebase user.
-//
+// Supports:
+// /api/journals
+// /api/journal
+// ======================================================
+
+async function getJournals(req, res) {
+
+    try {
+
+        const uid =
+            req.user.uid;
+
+
+        console.log(
+            "Loading journals for UID:",
+            uid
+        );
+
+
+        const snapshot =
+            await db
+
+                .collection("users")
+
+                .doc(uid)
+
+                .collection("journal")
+
+                .orderBy(
+                    "createdAt",
+                    "desc"
+                )
+
+                .get();
+
+
+        const journals = [];
+
+
+        snapshot.forEach((doc) => {
+
+            const data =
+                doc.data();
+
+
+            journals.push({
+
+                id:
+                    doc.id,
+
+                ...data
+
+            });
+
+        });
+
+
+        console.log(
+            "Journals found:",
+            journals.length
+        );
+
+
+        return res.json({
+
+            journals:
+                journals
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Journal retrieval error:",
+            error
+        );
+
+
+        return res.status(500).json({
+
+            error:
+                "Failed to retrieve journals."
+
+        });
+
+    }
+
+}
+
+
+// ======================================================
+// GET JOURNALS - BOTH ROUTES
 // ======================================================
 
 app.get(
     "/api/journals",
     authenticateUser,
-    async (req, res) => {
+    getJournals
+);
 
-        try {
-
-            const uid =
-                req.user.uid;
-
-            console.log(
-                "Loading journals for UID:",
-                uid
-            );
-
-
-            const snapshot =
-                await db
-
-                    .collection("users")
-
-                    .doc(uid)
-
-                    .collection("journal")
-
-                    .orderBy(
-                        "createdAt",
-                        "desc"
-                    )
-
-                    .get();
-
-
-            const journals = [];
-
-
-            snapshot.forEach(
-                (doc) => {
-
-                    journals.push({
-
-                        id:
-                            doc.id,
-
-                        ...doc.data()
-
-                    });
-
-                }
-            );
-
-
-            console.log(
-                "Journals found:",
-                journals.length
-            );
-
-
-            res.json({
-
-                journals:
-                    journals
-
-            });
-
-        } catch (error) {
-
-            console.error(
-                "Journal retrieval error:",
-                error
-            );
-
-            res.status(500).json({
-                error:
-                    "Failed to retrieve journals."
-            });
-
-        }
-
-    }
+app.get(
+    "/api/journal",
+    authenticateUser,
+    getJournals
 );
 
 
 // ======================================================
-// GET /api/journals/:journalId
-// ======================================================
-//
-// Returns ONE journal belonging ONLY
-// to the authenticated user.
-//
+// GET SINGLE JOURNAL
 // ======================================================
 
 app.get(
@@ -654,6 +628,7 @@ app.get(
 
             const uid =
                 req.user.uid;
+
 
             const journalId =
                 req.params.journalId;
@@ -678,14 +653,16 @@ app.get(
             ) {
 
                 return res.status(404).json({
+
                     error:
                         "Journal not found."
+
                 });
 
             }
 
 
-            res.json({
+            return res.json({
 
                 id:
                     journalDoc.id,
@@ -701,9 +678,12 @@ app.get(
                 error
             );
 
-            res.status(500).json({
+
+            return res.status(500).json({
+
                 error:
                     "Failed to retrieve journal."
+
             });
 
         }
@@ -713,16 +693,182 @@ app.get(
 
 
 // ======================================================
-// SERVER START
+// GET SINGLE JOURNAL
+// Also support /api/journal/:journalId
 // ======================================================
-//
-// IMPORTANT FOR CLOUD RUN:
-// 0.0.0.0 allows the container to receive
-// external traffic.
-//
-// PORT is supplied by Cloud Run.
-// Locally it defaults to 8080.
-//
+
+app.get(
+    "/api/journal/:journalId",
+    authenticateUser,
+    async (req, res) => {
+
+        try {
+
+            const uid =
+                req.user.uid;
+
+
+            const journalId =
+                req.params.journalId;
+
+
+            const journalDoc =
+                await db
+
+                    .collection("users")
+
+                    .doc(uid)
+
+                    .collection("journal")
+
+                    .doc(journalId)
+
+                    .get();
+
+
+            if (
+                !journalDoc.exists
+            ) {
+
+                return res.status(404).json({
+
+                    error:
+                        "Journal not found."
+
+                });
+
+            }
+
+
+            return res.json({
+
+                id:
+                    journalDoc.id,
+
+                ...journalDoc.data()
+
+            });
+
+        } catch (error) {
+
+            console.error(
+                "Single journal error:",
+                error
+            );
+
+
+            return res.status(500).json({
+
+                error:
+                    "Failed to retrieve journal."
+
+            });
+
+        }
+
+    }
+);
+
+
+// ======================================================
+// DELETE JOURNAL
+// ======================================================
+
+async function deleteJournal(req, res) {
+
+    try {
+
+        const uid =
+            req.user.uid;
+
+
+        const journalId =
+            req.params.journalId;
+
+
+        await db
+
+            .collection("users")
+
+            .doc(uid)
+
+            .collection("journal")
+
+            .doc(journalId)
+
+            .delete();
+
+
+        console.log(
+            "Journal deleted:",
+            journalId
+        );
+
+
+        return res.json({
+
+            success:
+                true,
+
+            message:
+                "Journal deleted successfully."
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Journal deletion error:",
+            error
+        );
+
+
+        return res.status(500).json({
+
+            error:
+                "Failed to delete journal."
+
+        });
+
+    }
+
+}
+
+
+app.delete(
+    "/api/journals/:journalId",
+    authenticateUser,
+    deleteJournal
+);
+
+app.delete(
+    "/api/journal/:journalId",
+    authenticateUser,
+    deleteJournal
+);
+
+
+// ======================================================
+// 404 API HANDLER
+// ======================================================
+
+app.use(
+    "/api",
+    (req, res) => {
+
+        return res.status(404).json({
+
+            error:
+                "API endpoint not found."
+
+        });
+
+    }
+);
+
+
+// ======================================================
+// START SERVER
 // ======================================================
 
 app.listen(
@@ -751,7 +897,11 @@ app.listen(
         );
 
         console.log(
-            "Cloud Run compatible: listening on 0.0.0.0"
+            "Backend listening on 0.0.0.0"
+        );
+
+        console.log(
+            "================================="
         );
 
     }
