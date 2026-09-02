@@ -122,7 +122,9 @@ let isSending = false;
 // ======================================================
 
 function exists(element) {
+
     return element !== null;
+
 }
 
 
@@ -130,31 +132,49 @@ function exists(element) {
 // STATUS MESSAGE
 // ======================================================
 
-function showStatus(message, isError = false) {
+function showStatus(
+    message,
+    isError = false
+) {
 
     if (!exists(statusMessage)) {
         return;
     }
 
-    statusMessage.textContent = message;
+    statusMessage.textContent =
+        message;
 
     if (isError) {
 
-        statusMessage.classList.add("error");
+        statusMessage.classList.add(
+            "error"
+        );
 
     } else {
 
-        statusMessage.classList.remove("error");
+        statusMessage.classList.remove(
+            "error"
+        );
+
     }
 
-    setTimeout(function () {
+    setTimeout(
+        function () {
 
-        if (statusMessage.textContent === message) {
+            if (
+                statusMessage.textContent ===
+                message
+            ) {
 
-            statusMessage.textContent = "";
-        }
+                statusMessage.textContent =
+                    "";
 
-    }, 5000);
+            }
+
+        },
+        5000
+    );
+
 }
 
 
@@ -162,18 +182,23 @@ function showStatus(message, isError = false) {
 // AUTH MESSAGE
 // ======================================================
 
-function showAuthMessage(message, isError = false) {
+function showAuthMessage(
+    message,
+    isError = false
+) {
 
     if (!exists(authMessage)) {
         return;
     }
 
-    authMessage.textContent = message;
+    authMessage.textContent =
+        message;
 
     authMessage.style.color =
         isError
             ? "red"
             : "";
+
 }
 
 
@@ -181,26 +206,38 @@ function showAuthMessage(message, isError = false) {
 // OPEN AUTH MODAL
 // ======================================================
 
-function openAuthModal(mode) {
+function openAuthModal(
+    mode
+) {
 
-    authMode = mode || "signin";
+    authMode =
+        mode || "signin";
 
     if (!exists(authModal)) {
         return;
     }
 
-    authModal.style.display = "block";
+    authModal.style.display =
+        "block";
 
     if (exists(authForm)) {
+
         authForm.reset();
+
     }
 
-    if (authMode === "signup") {
+    if (
+        authMode ===
+        "signup"
+    ) {
 
-        if (exists(emailSignInButton)) {
+        if (
+            exists(emailSignInButton)
+        ) {
 
             emailSignInButton.textContent =
                 "Create Account";
+
         }
 
         showAuthMessage(
@@ -209,18 +246,25 @@ function openAuthModal(mode) {
 
     } else {
 
-        if (exists(emailSignInButton)) {
+        if (
+            exists(emailSignInButton)
+        ) {
 
             emailSignInButton.textContent =
                 "Sign In";
+
         }
 
         showAuthMessage("");
+
     }
 
     if (exists(emailInput)) {
+
         emailInput.focus();
+
     }
+
 }
 
 
@@ -234,14 +278,17 @@ function closeAuthModal() {
 
         authModal.style.display =
             "none";
+
     }
 
     if (exists(authForm)) {
 
         authForm.reset();
+
     }
 
     showAuthMessage("");
+
 }
 
 
@@ -257,9 +304,13 @@ if (exists(loginButton)) {
 
             event.preventDefault();
 
-            openAuthModal("signin");
+            openAuthModal(
+                "signin"
+            );
+
         }
     );
+
 }
 
 
@@ -275,9 +326,13 @@ if (exists(signupButton)) {
 
             event.preventDefault();
 
-            openAuthModal("signup");
+            openAuthModal(
+                "signup"
+            );
+
         }
     );
+
 }
 
 
@@ -294,8 +349,10 @@ if (exists(closeAuthButton)) {
             event.preventDefault();
 
             closeAuthModal();
+
         }
     );
+
 }
 
 
@@ -329,7 +386,9 @@ if (exists(authForm)) {
                 );
 
                 if (exists(emailInput)) {
+
                     emailInput.focus();
+
                 }
 
                 return;
@@ -343,7 +402,9 @@ if (exists(authForm)) {
                 );
 
                 if (exists(passwordInput)) {
+
                     passwordInput.focus();
+
                 }
 
                 return;
@@ -354,9 +415,14 @@ if (exists(authForm)) {
             // SIGN UP
             // ==================================================
 
-            if (authMode === "signup") {
+            if (
+                authMode ===
+                "signup"
+            ) {
 
-                if (password.length < 6) {
+                if (
+                    password.length < 6
+                ) {
 
                     showAuthMessage(
                         "Password must be at least 6 characters.",
@@ -368,8 +434,15 @@ if (exists(authForm)) {
 
                 try {
 
-                    if (exists(emailSignInButton)) {
-                        emailSignInButton.disabled = true;
+                    if (
+                        exists(
+                            emailSignInButton
+                        )
+                    ) {
+
+                        emailSignInButton.disabled =
+                            true;
+
                     }
 
                     showAuthMessage(
@@ -388,7 +461,9 @@ if (exists(authForm)) {
 
                     setTimeout(
                         function () {
+
                             closeAuthModal();
+
                         },
                         700
                     );
@@ -432,6 +507,7 @@ if (exists(authForm)) {
                         message =
                             error.message ||
                             message;
+
                     }
 
                     showAuthMessage(
@@ -441,9 +517,17 @@ if (exists(authForm)) {
 
                 } finally {
 
-                    if (exists(emailSignInButton)) {
-                        emailSignInButton.disabled = false;
+                    if (
+                        exists(
+                            emailSignInButton
+                        )
+                    ) {
+
+                        emailSignInButton.disabled =
+                            false;
+
                     }
+
                 }
 
                 return;
@@ -456,8 +540,15 @@ if (exists(authForm)) {
 
             try {
 
-                if (exists(emailSignInButton)) {
-                    emailSignInButton.disabled = true;
+                if (
+                    exists(
+                        emailSignInButton
+                    )
+                ) {
+
+                    emailSignInButton.disabled =
+                        true;
+
                 }
 
                 showAuthMessage(
@@ -476,7 +567,9 @@ if (exists(authForm)) {
 
                 setTimeout(
                     function () {
+
                         closeAuthModal();
+
                     },
                     500
                 );
@@ -536,6 +629,7 @@ if (exists(authForm)) {
                     message =
                         error.message ||
                         message;
+
                 }
 
                 showAuthMessage(
@@ -545,12 +639,22 @@ if (exists(authForm)) {
 
             } finally {
 
-                if (exists(emailSignInButton)) {
-                    emailSignInButton.disabled = false;
+                if (
+                    exists(
+                        emailSignInButton
+                    )
+                ) {
+
+                    emailSignInButton.disabled =
+                        false;
+
                 }
+
             }
+
         }
     );
+
 }
 
 
@@ -558,7 +662,11 @@ if (exists(authForm)) {
 // FORGOT PASSWORD
 // ======================================================
 
-if (exists(forgotPasswordButton)) {
+if (
+    exists(
+        forgotPasswordButton
+    )
+) {
 
     forgotPasswordButton.addEventListener(
         "click",
@@ -572,7 +680,9 @@ if (exists(forgotPasswordButton)) {
                 );
 
             if (!email) {
+
                 return;
+
             }
 
             try {
@@ -597,9 +707,12 @@ if (exists(forgotPasswordButton)) {
                     error.message ||
                     "Password reset failed."
                 );
+
             }
+
         }
     );
+
 }
 
 
@@ -617,11 +730,14 @@ if (exists(logoutButton)) {
 
                 await signOut(auth);
 
-                currentUser = null;
+                currentUser =
+                    null;
 
-                currentMessages = [];
+                currentMessages =
+                    [];
 
-                currentEntryId = null;
+                currentEntryId =
+                    null;
 
                 showStatus(
                     "Logged out successfully."
@@ -634,9 +750,12 @@ if (exists(logoutButton)) {
                     "Logout failed.",
                     true
                 );
+
             }
+
         }
     );
+
 }
 
 
@@ -651,9 +770,13 @@ async function getIdToken() {
         throw new Error(
             "User is not logged in."
         );
+
     }
 
-    return await currentUser.getIdToken(true);
+    return await currentUser.getIdToken(
+        true
+    );
+
 }
 
 
@@ -661,10 +784,14 @@ async function getIdToken() {
 // API RESPONSE HELPER
 // ======================================================
 
-async function readApiResponse(response) {
+async function readApiResponse(
+    response
+) {
 
     const contentType =
-        response.headers.get("content-type") || "";
+        response.headers.get(
+            "content-type"
+        ) || "";
 
     const text =
         await response.text();
@@ -672,45 +799,56 @@ async function readApiResponse(response) {
     if (!text) {
 
         return {};
+
     }
 
     if (
         contentType
             .toLowerCase()
-            .includes("application/json")
+            .includes(
+                "application/json"
+            )
     ) {
 
         try {
 
-            return JSON.parse(text);
+            return JSON.parse(
+                text
+            );
 
         } catch (error) {
 
             throw new Error(
                 "Server returned invalid JSON."
             );
+
         }
+
     }
 
 
-    // --------------------------------------------------
-    // Render/Firebase/HTML error protection
-    // --------------------------------------------------
-
     if (
-        text.trim().startsWith("<!DOCTYPE") ||
-        text.trim().startsWith("<html") ||
-        text.includes("<!DOCTYPE html>")
+        text.trim().startsWith(
+            "<!DOCTYPE"
+        ) ||
+        text.trim().startsWith(
+            "<html"
+        ) ||
+        text.includes(
+            "<!DOCTYPE html>"
+        )
     ) {
 
         throw new Error(
             "Backend returned an HTML page instead of JSON. Please check the Render API."
         );
+
     }
 
     throw new Error(
         "Server returned an invalid response."
     );
+
 }
 
 
@@ -722,7 +860,8 @@ onAuthStateChanged(
     auth,
     async function (user) {
 
-        currentUser = user;
+        currentUser =
+            user;
 
         if (user) {
 
@@ -730,60 +869,113 @@ onAuthStateChanged(
 
                 authStatus.textContent =
                     "Logged in as: " +
-                    (user.email || "");
+                    (
+                        user.email ||
+                        ""
+                    );
+
             }
 
             if (exists(loginButton)) {
-                loginButton.style.display = "none";
+
+                loginButton.style.display =
+                    "none";
+
             }
 
             if (exists(signupButton)) {
-                signupButton.style.display = "none";
+
+                signupButton.style.display =
+                    "none";
+
             }
 
-            if (exists(forgotPasswordButton)) {
-                forgotPasswordButton.style.display = "none";
+            if (
+                exists(
+                    forgotPasswordButton
+                )
+            ) {
+
+                forgotPasswordButton.style.display =
+                    "none";
+
             }
 
             if (exists(logoutButton)) {
-                logoutButton.style.display = "inline-block";
+
+                logoutButton.style.display =
+                    "inline-block";
+
             }
 
-            if (exists(newConversationButton)) {
-                newConversationButton.disabled = false;
+            if (
+                exists(
+                    newConversationButton
+                )
+            ) {
+
+                newConversationButton.disabled =
+                    false;
+
             }
 
             if (exists(chatInput)) {
-                chatInput.disabled = false;
+
+                chatInput.disabled =
+                    false;
+
             }
 
             if (exists(sendButton)) {
-                sendButton.disabled = false;
+
+                sendButton.disabled =
+                    false;
+
             }
 
             if (exists(journalInput)) {
-                journalInput.disabled = false;
+
+                journalInput.disabled =
+                    false;
+
             }
 
             if (exists(saveButton)) {
-                saveButton.disabled = false;
+
+                saveButton.disabled =
+                    false;
+
             }
 
             if (exists(clearButton)) {
-                clearButton.disabled = false;
+
+                clearButton.disabled =
+                    false;
+
             }
 
-            if (exists(saveJournalButton)) {
-                saveJournalButton.disabled = false;
+            if (
+                exists(
+                    saveJournalButton
+                )
+            ) {
+
+                saveJournalButton.disabled =
+                    false;
+
             }
 
-            currentMessages = [];
+            currentMessages =
+                [];
 
-            currentEntryId = null;
+            currentEntryId =
+                null;
 
             if (exists(chatBox)) {
 
-                chatBox.innerHTML = "";
+                chatBox.innerHTML =
+                    "";
+
             }
 
             addGeminiMessage(
@@ -798,55 +990,103 @@ onAuthStateChanged(
 
                 authStatus.textContent =
                     "Not logged in";
+
             }
 
             if (exists(loginButton)) {
-                loginButton.style.display = "inline-block";
+
+                loginButton.style.display =
+                    "inline-block";
+
             }
 
             if (exists(signupButton)) {
-                signupButton.style.display = "inline-block";
+
+                signupButton.style.display =
+                    "inline-block";
+
             }
 
-            if (exists(forgotPasswordButton)) {
-                forgotPasswordButton.style.display = "inline-block";
+            if (
+                exists(
+                    forgotPasswordButton
+                )
+            ) {
+
+                forgotPasswordButton.style.display =
+                    "inline-block";
+
             }
 
             if (exists(logoutButton)) {
-                logoutButton.style.display = "none";
+
+                logoutButton.style.display =
+                    "none";
+
             }
 
-            if (exists(newConversationButton)) {
-                newConversationButton.disabled = true;
+            if (
+                exists(
+                    newConversationButton
+                )
+            ) {
+
+                newConversationButton.disabled =
+                    true;
+
             }
 
             if (exists(chatInput)) {
-                chatInput.disabled = true;
+
+                chatInput.disabled =
+                    true;
+
             }
 
             if (exists(sendButton)) {
-                sendButton.disabled = true;
+
+                sendButton.disabled =
+                    true;
+
             }
 
             if (exists(journalInput)) {
-                journalInput.disabled = true;
+
+                journalInput.disabled =
+                    true;
+
             }
 
             if (exists(saveButton)) {
-                saveButton.disabled = true;
+
+                saveButton.disabled =
+                    true;
+
             }
 
             if (exists(clearButton)) {
-                clearButton.disabled = true;
+
+                clearButton.disabled =
+                    true;
+
             }
 
-            if (exists(saveJournalButton)) {
-                saveJournalButton.disabled = true;
+            if (
+                exists(
+                    saveJournalButton
+                )
+            ) {
+
+                saveJournalButton.disabled =
+                    true;
+
             }
 
-            currentMessages = [];
+            currentMessages =
+                [];
 
-            currentEntryId = null;
+            currentEntryId =
+                null;
 
             if (exists(entriesList)) {
 
@@ -855,6 +1095,7 @@ onAuthStateChanged(
                         Please login to view your journals.
                     </p>
                 `;
+
             }
 
             if (exists(chatBox)) {
@@ -867,8 +1108,11 @@ onAuthStateChanged(
                         </p>
                     </div>
                 `;
+
             }
+
         }
+
     }
 );
 
@@ -877,14 +1121,34 @@ onAuthStateChanged(
 // HTML ESCAPE
 // ======================================================
 
-function escapeHtml(text) {
+function escapeHtml(
+    text
+) {
 
-    return String(text)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    return String(
+        text ?? ""
+    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
 }
 
 
@@ -892,22 +1156,32 @@ function escapeHtml(text) {
 // MARKDOWN
 // ======================================================
 
-function renderMarkdown(markdown) {
+function renderMarkdown(
+    markdown
+) {
 
     if (!markdown) {
+
         return "";
+
     }
 
     const text =
-        escapeHtml(markdown);
+        escapeHtml(
+            markdown
+        );
 
     return `
         <div class="gemini-markdown">
             <p>
-                ${text.replace(/\n/g, "<br>")}
+                ${text.replace(
+                    /\n/g,
+                    "<br>"
+                )}
             </p>
         </div>
     `;
+
 }
 
 
@@ -915,14 +1189,20 @@ function renderMarkdown(markdown) {
 // USER MESSAGE
 // ======================================================
 
-function addUserMessage(text) {
+function addUserMessage(
+    text
+) {
 
     if (!exists(chatBox)) {
+
         return;
+
     }
 
     const message =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
     message.className =
         "user-message";
@@ -934,10 +1214,13 @@ function addUserMessage(text) {
         </p>
     `;
 
-    chatBox.appendChild(message);
+    chatBox.appendChild(
+        message
+    );
 
     chatBox.scrollTop =
         chatBox.scrollHeight;
+
 }
 
 
@@ -945,14 +1228,20 @@ function addUserMessage(text) {
 // GEMINI MESSAGE
 // ======================================================
 
-function addGeminiMessage(text) {
+function addGeminiMessage(
+    text
+) {
 
     if (!exists(chatBox)) {
+
         return;
+
     }
 
     const message =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
     message.className =
         "ai-message";
@@ -962,10 +1251,176 @@ function addGeminiMessage(text) {
         ${renderMarkdown(text)}
     `;
 
-    chatBox.appendChild(message);
+    chatBox.appendChild(
+        message
+    );
 
     chatBox.scrollTop =
         chatBox.scrollHeight;
+
+}
+
+
+// ======================================================
+// CONVERT JOURNAL TO DISPLAY DATA
+// ======================================================
+
+function getJournalDisplayData(
+    entry
+) {
+
+    let title =
+        entry.title ||
+        "";
+
+    let content =
+        entry.content ||
+        "";
+
+    let messages =
+        Array.isArray(
+            entry.messages
+        )
+            ? entry.messages
+            : [];
+
+
+    // --------------------------------------------------
+    // Journals created by /api/chat
+    // contain messages but may not contain title/content.
+    // --------------------------------------------------
+
+    if (
+        !content &&
+        messages.length > 0
+    ) {
+
+        content =
+            messages
+                .map(
+                    function (message) {
+
+                        const role =
+                            message.role ===
+                            "user"
+                                ? "You"
+                                : "Gemini";
+
+                        return (
+                            role +
+                            ": " +
+                            (
+                                message.text ||
+                                ""
+                            )
+                        );
+
+                    }
+                )
+                .join(
+                    "\n\n"
+                );
+
+    }
+
+
+    // --------------------------------------------------
+    // Generate a useful title automatically.
+    // --------------------------------------------------
+
+    if (!title) {
+
+        const firstUserMessage =
+            messages.find(
+                function (message) {
+
+                    return (
+                        message &&
+                        message.role ===
+                            "user" &&
+                        typeof message.text ===
+                            "string" &&
+                        message.text.trim()
+                    );
+
+                }
+            );
+
+        if (
+            firstUserMessage
+        ) {
+
+            title =
+                firstUserMessage.text
+                    .trim()
+                    .substring(
+                        0,
+                        40
+                    );
+
+            if (
+                firstUserMessage.text
+                    .trim()
+                    .length > 40
+            ) {
+
+                title +=
+                    "...";
+
+            }
+
+        } else {
+
+            title =
+                "Gemini Conversation";
+
+        }
+
+    }
+
+
+    // --------------------------------------------------
+    // Preview
+    // --------------------------------------------------
+
+    let preview =
+        content
+            .replace(
+                /\s+/g,
+                " "
+            )
+            .trim();
+
+    if (
+        preview.length > 100
+    ) {
+
+        preview =
+            preview.substring(
+                0,
+                100
+            ) +
+            "...";
+
+    }
+
+
+    return {
+
+        title:
+            title,
+
+        content:
+            content,
+
+        preview:
+            preview,
+
+        messages:
+            messages
+
+    };
+
 }
 
 
@@ -976,11 +1431,15 @@ function addGeminiMessage(text) {
 async function loadJournalEntries() {
 
     if (!exists(entriesList)) {
+
         return;
+
     }
 
     if (!currentUser) {
+
         return;
+
     }
 
     try {
@@ -990,24 +1449,28 @@ async function loadJournalEntries() {
 
         const response =
             await fetch(
-                BACKEND_URL + "/api/journal",
+                BACKEND_URL +
+                "/api/journal",
                 {
-                    method: "GET",
+                    method:
+                        "GET",
 
                     headers: {
+
                         "Authorization":
-                            "Bearer " + token
+                            "Bearer " +
+                            token
+
                     }
+
                 }
             );
 
 
-        // --------------------------------------------------
-        // Read backend response safely
-        // --------------------------------------------------
-
         const data =
-            await readApiResponse(response);
+            await readApiResponse(
+                response
+            );
 
 
         if (!response.ok) {
@@ -1017,45 +1480,50 @@ async function loadJournalEntries() {
                 data.message ||
                 "Unable to load journals."
             );
+
         }
 
 
         // --------------------------------------------------
-        // Support both:
-        //
-        // [...]
-        //
-        // and:
-        //
-        // { journals: [...] }
+        // Support all expected response formats
         // --------------------------------------------------
 
-        let entries = [];
+        let entries =
+            [];
 
-        if (Array.isArray(data)) {
+        if (
+            Array.isArray(data)
+        ) {
 
-            entries = data;
+            entries =
+                data;
 
         } else if (
             data &&
-            Array.isArray(data.journals)
+            Array.isArray(
+                data.journals
+            )
         ) {
 
-            entries = data.journals;
+            entries =
+                data.journals;
 
         } else if (
             data &&
-            Array.isArray(data.entries)
+            Array.isArray(
+                data.entries
+            )
         ) {
 
-            entries = data.entries;
+            entries =
+                data.entries;
 
-        } else {
-
-            entries = [];
         }
 
-        displayJournalEntries(entries);
+
+        displayJournalEntries(
+            entries
+        );
 
     } catch (error) {
 
@@ -1075,7 +1543,9 @@ async function loadJournalEntries() {
             "Unable to load journal entries.",
             true
         );
+
     }
+
 }
 
 
@@ -1083,13 +1553,18 @@ async function loadJournalEntries() {
 // DISPLAY JOURNALS
 // ======================================================
 
-function displayJournalEntries(entries) {
+function displayJournalEntries(
+    entries
+) {
 
     if (!exists(entriesList)) {
+
         return;
+
     }
 
-    entriesList.innerHTML = "";
+    entriesList.innerHTML =
+        "";
 
     if (
         !Array.isArray(entries) ||
@@ -1103,86 +1578,101 @@ function displayJournalEntries(entries) {
         `;
 
         return;
+
     }
 
 
-    entries.forEach(function (entry) {
+    entries.forEach(
+        function (entry) {
 
-        const item =
-            document.createElement("div");
+            const displayData =
+                getJournalDisplayData(
+                    entry
+                );
 
-        item.className =
-            "journal-entry-item";
+            const item =
+                document.createElement(
+                    "div"
+                );
 
-        const title =
-            entry.title ||
-            "Untitled Entry";
-
-        const preview =
-            (
-                entry.content ||
-                ""
-            ).substring(0, 100);
-
-        item.innerHTML = `
-            <div class="journal-entry-title">
-                ${escapeHtml(title)}
-            </div>
-
-            <div class="journal-entry-preview">
-                ${escapeHtml(preview)}
-            </div>
-
-            <button
-                type="button"
-                class="delete-entry-button">
-                Delete
-            </button>
-        `;
+            item.className =
+                "journal-entry-item";
 
 
-        item.addEventListener(
-            "click",
-            function (event) {
+            item.innerHTML = `
+                <div class="journal-entry-title">
+                    ${escapeHtml(
+                        displayData.title
+                    )}
+                </div>
 
-                if (
-                    event.target.classList.contains(
-                        "delete-entry-button"
-                    )
-                ) {
+                <div class="journal-entry-preview">
+                    ${escapeHtml(
+                        displayData.preview
+                    )}
+                </div>
 
-                    return;
-                }
-
-                openJournalEntry(entry);
-            }
-        );
-
-
-        const deleteButton =
-            item.querySelector(
-                ".delete-entry-button"
-            );
+                <button
+                    type="button"
+                    class="delete-entry-button">
+                    Delete
+                </button>
+            `;
 
 
-        if (deleteButton) {
-
-            deleteButton.addEventListener(
+            item.addEventListener(
                 "click",
                 function (event) {
 
-                    event.stopPropagation();
+                    if (
+                        event.target.classList.contains(
+                            "delete-entry-button"
+                        )
+                    ) {
 
-                    deleteJournalEntry(
-                        entry.id
+                        return;
+
+                    }
+
+                    openJournalEntry(
+                        entry
                     );
+
                 }
             );
+
+
+            const deleteButton =
+                item.querySelector(
+                    ".delete-entry-button"
+                );
+
+
+            if (deleteButton) {
+
+                deleteButton.addEventListener(
+                    "click",
+                    function (event) {
+
+                        event.stopPropagation();
+
+                        deleteJournalEntry(
+                            entry.id
+                        );
+
+                    }
+                );
+
+            }
+
+
+            entriesList.appendChild(
+                item
+            );
+
         }
+    );
 
-
-        entriesList.appendChild(item);
-    });
 }
 
 
@@ -1190,34 +1680,115 @@ function displayJournalEntries(entries) {
 // OPEN JOURNAL
 // ======================================================
 
-function openJournalEntry(entry) {
+function openJournalEntry(
+    entry
+) {
 
     currentEntryId =
         entry.id;
 
+    const displayData =
+        getJournalDisplayData(
+            entry
+        );
+
+
     if (exists(journalTitle)) {
 
         journalTitle.textContent =
-            entry.title ||
-            "Journal Entry";
+            displayData.title;
+
     }
 
     if (exists(journalStatus)) {
 
         journalStatus.textContent =
             "Saved journal entry";
+
     }
 
     if (exists(chatBox)) {
 
-        chatBox.innerHTML = "";
+        chatBox.innerHTML =
+            "";
+
     }
 
-    currentMessages = [];
+    currentMessages =
+        Array.isArray(
+            entry.messages
+        )
+            ? entry.messages.map(
+                function (message) {
 
-    addUserMessage(
-        entry.content || ""
-    );
+                    return {
+
+                        role:
+                            message.role,
+
+                        text:
+                            message.text ||
+                            ""
+
+                    };
+
+                }
+            )
+            : [];
+
+
+    // --------------------------------------------------
+    // If the journal contains structured messages,
+    // display them as an actual conversation.
+    // --------------------------------------------------
+
+    if (
+        currentMessages.length > 0
+    ) {
+
+        currentMessages.forEach(
+            function (message) {
+
+                if (
+                    message.role ===
+                    "user"
+                ) {
+
+                    addUserMessage(
+                        message.text
+                    );
+
+                } else {
+
+                    addGeminiMessage(
+                        message.text
+                    );
+
+                }
+
+            }
+        );
+
+    } else {
+
+        // ------------------------------------------------
+        // Manual journal without messages
+        // ------------------------------------------------
+
+        addUserMessage(
+            displayData.content
+        );
+
+    }
+
+
+    if (exists(chatInput)) {
+
+        chatInput.value =
+            "";
+
+    }
+
 }
 
 
@@ -1225,7 +1796,9 @@ function openJournalEntry(entry) {
 // DELETE JOURNAL
 // ======================================================
 
-async function deleteJournalEntry(id) {
+async function deleteJournalEntry(
+    id
+) {
 
     if (!id) {
 
@@ -1235,6 +1808,7 @@ async function deleteJournalEntry(id) {
         );
 
         return;
+
     }
 
     if (
@@ -1244,7 +1818,9 @@ async function deleteJournalEntry(id) {
     ) {
 
         return;
+
     }
+
 
     try {
 
@@ -1256,18 +1832,25 @@ async function deleteJournalEntry(id) {
                 BACKEND_URL +
                 `/api/journal/${encodeURIComponent(id)}`,
                 {
-                    method: "DELETE",
+                    method:
+                        "DELETE",
 
                     headers: {
+
                         "Authorization":
-                            "Bearer " + token
+                            "Bearer " +
+                            token
+
                     }
+
                 }
             );
 
 
         const data =
-            await readApiResponse(response);
+            await readApiResponse(
+                response
+            );
 
 
         if (!response.ok) {
@@ -1277,39 +1860,49 @@ async function deleteJournalEntry(id) {
                 data.message ||
                 "Delete failed."
             );
+
         }
 
 
         if (
-            currentEntryId === id
+            currentEntryId ===
+            id
         ) {
 
-            currentEntryId = null;
+            currentEntryId =
+                null;
 
-            currentMessages = [];
+            currentMessages =
+                [];
 
             if (exists(chatBox)) {
 
-                chatBox.innerHTML = "";
+                chatBox.innerHTML =
+                    "";
+
             }
 
             if (exists(journalTitle)) {
 
                 journalTitle.textContent =
                     "New Gemini Journal";
+
             }
 
             if (exists(journalStatus)) {
 
                 journalStatus.textContent =
                     "Start a new conversation";
+
             }
+
         }
 
 
         showStatus(
             "Journal entry deleted successfully."
         );
+
 
         await loadJournalEntries();
 
@@ -1325,7 +1918,9 @@ async function deleteJournalEntry(id) {
             "Delete failed.",
             true
         );
+
     }
+
 }
 
 
@@ -1342,8 +1937,10 @@ if (exists(sendButton)) {
             event.preventDefault();
 
             await sendMessage();
+
         }
     );
+
 }
 
 
@@ -1357,14 +1954,20 @@ if (exists(chatInput)) {
         "keydown",
         async function (event) {
 
-            if (event.key === "Enter") {
+            if (
+                event.key ===
+                "Enter"
+            ) {
 
                 event.preventDefault();
 
                 await sendMessage();
+
             }
+
         }
     );
+
 }
 
 
@@ -1375,11 +1978,15 @@ if (exists(chatInput)) {
 async function sendMessage() {
 
     if (isSending) {
+
         return;
+
     }
 
     if (!exists(chatInput)) {
+
         return;
+
     }
 
     const message =
@@ -1395,6 +2002,7 @@ async function sendMessage() {
         chatInput.focus();
 
         return;
+
     }
 
     if (!currentUser) {
@@ -1405,6 +2013,7 @@ async function sendMessage() {
         );
 
         return;
+
     }
 
 
@@ -1412,16 +2021,20 @@ async function sendMessage() {
     // START REQUEST
     // ==================================================
 
-    isSending = true;
+    isSending =
+        true;
 
-    chatInput.value = "";
+    chatInput.value =
+        "";
 
     if (exists(sendButton)) {
 
-        sendButton.disabled = true;
+        sendButton.disabled =
+            true;
 
         sendButton.textContent =
             "Thinking...";
+
     }
 
 
@@ -1429,7 +2042,9 @@ async function sendMessage() {
     // DISPLAY USER MESSAGE
     // ==================================================
 
-    addUserMessage(message);
+    addUserMessage(
+        message
+    );
 
 
     // ==================================================
@@ -1438,9 +2053,12 @@ async function sendMessage() {
 
     currentMessages.push({
 
-        role: "user",
+        role:
+            "user",
 
-        text: message
+        text:
+            message
+
     });
 
 
@@ -1449,7 +2067,9 @@ async function sendMessage() {
     // ==================================================
 
     const thinkingMessage =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
     thinkingMessage.className =
         "ai-message";
@@ -1467,28 +2087,23 @@ async function sendMessage() {
 
         chatBox.scrollTop =
             chatBox.scrollHeight;
+
     }
 
 
     try {
 
-        // ==============================================
-        // FIREBASE ID TOKEN
-        // ==============================================
-
         const token =
             await getIdToken();
 
 
-        // ==============================================
-        // SEND TO RENDER BACKEND
-        // ==============================================
-
         const response =
             await fetch(
-                BACKEND_URL + "/api/chat",
+                BACKEND_URL +
+                "/api/chat",
                 {
-                    method: "POST",
+                    method:
+                        "POST",
 
                     headers: {
 
@@ -1496,7 +2111,9 @@ async function sendMessage() {
                             "application/json",
 
                         "Authorization":
-                            "Bearer " + token
+                            "Bearer " +
+                            token
+
                     },
 
                     body:
@@ -1506,21 +2123,16 @@ async function sendMessage() {
                                 currentMessages
 
                         })
+
                 }
             );
 
 
-        // ==============================================
-        // READ RESPONSE
-        // ==============================================
-
         const data =
-            await readApiResponse(response);
+            await readApiResponse(
+                response
+            );
 
-
-        // ==============================================
-        // CHECK SERVER ERROR
-        // ==============================================
 
         if (!response.ok) {
 
@@ -1529,12 +2141,9 @@ async function sendMessage() {
                 data.message ||
                 "Gemini could not respond."
             );
+
         }
 
-
-        // ==============================================
-        // REMOVE THINKING MESSAGE
-        // ==============================================
 
         if (
             thinkingMessage &&
@@ -1542,12 +2151,9 @@ async function sendMessage() {
         ) {
 
             thinkingMessage.remove();
+
         }
 
-
-        // ==============================================
-        // GET GEMINI RESPONSE
-        // ==============================================
 
         const geminiText =
             data.response ||
@@ -1556,34 +2162,45 @@ async function sendMessage() {
             "Gemini did not return a response.";
 
 
-        // ==============================================
-        // STORE GEMINI RESPONSE
-        // ==============================================
-
         currentMessages.push({
 
-            role: "model",
+            role:
+                "model",
 
-            text: geminiText
+            text:
+                geminiText
+
         });
 
-
-        // ==============================================
-        // DISPLAY GEMINI RESPONSE
-        // ==============================================
 
         addGeminiMessage(
             geminiText
         );
 
 
-        // ==============================================
-        // SUCCESS STATUS
-        // ==============================================
+        // --------------------------------------------------
+        // Backend automatically saves this conversation.
+        // --------------------------------------------------
+
+        if (data.journalId) {
+
+            currentEntryId =
+                data.journalId;
+
+        }
+
 
         showStatus(
             "Gemini responded successfully."
         );
+
+
+        // --------------------------------------------------
+        // Refresh journal list so the new conversation
+        // appears immediately.
+        // --------------------------------------------------
+
+        await loadJournalEntries();
 
     } catch (error) {
 
@@ -1593,24 +2210,18 @@ async function sendMessage() {
         );
 
 
-        // ==============================================
-        // REMOVE FAILED USER TURN
-        // ==============================================
-
         if (
             currentMessages.length > 0 &&
             currentMessages[
                 currentMessages.length - 1
-            ].role === "user"
+            ].role ===
+            "user"
         ) {
 
             currentMessages.pop();
+
         }
 
-
-        // ==============================================
-        // SHOW ERROR
-        // ==============================================
 
         if (
             thinkingMessage &&
@@ -1637,6 +2248,7 @@ async function sendMessage() {
             addGeminiMessage(
                 "Sorry, Gemini could not respond."
             );
+
         }
 
 
@@ -1648,25 +2260,27 @@ async function sendMessage() {
 
     } finally {
 
-        // ==============================================
-        // RESTORE RUN BUTTON
-        // ==============================================
-
-        isSending = false;
+        isSending =
+            false;
 
         if (exists(sendButton)) {
 
-            sendButton.disabled = false;
+            sendButton.disabled =
+                false;
 
             sendButton.textContent =
                 "Run";
+
         }
 
         if (exists(chatInput)) {
 
             chatInput.focus();
+
         }
+
     }
+
 }
 
 
@@ -1674,7 +2288,11 @@ async function sendMessage() {
 // NEW CONVERSATION
 // ======================================================
 
-if (exists(newConversationButton)) {
+if (
+    exists(
+        newConversationButton
+    )
+) {
 
     newConversationButton.addEventListener(
         "click",
@@ -1682,25 +2300,31 @@ if (exists(newConversationButton)) {
 
             event.preventDefault();
 
-            currentMessages = [];
+            currentMessages =
+                [];
 
-            currentEntryId = null;
+            currentEntryId =
+                null;
 
             if (exists(journalTitle)) {
 
                 journalTitle.textContent =
                     "New Gemini Journal";
+
             }
 
             if (exists(journalStatus)) {
 
                 journalStatus.textContent =
                     "Start a new conversation";
+
             }
 
             if (exists(chatBox)) {
 
-                chatBox.innerHTML = "";
+                chatBox.innerHTML =
+                    "";
+
             }
 
             addGeminiMessage(
@@ -1709,12 +2333,16 @@ if (exists(newConversationButton)) {
 
             if (exists(chatInput)) {
 
-                chatInput.value = "";
+                chatInput.value =
+                    "";
 
                 chatInput.focus();
+
             }
+
         }
     );
+
 }
 
 
@@ -1722,7 +2350,11 @@ if (exists(newConversationButton)) {
 // SAVE CONVERSATION
 // ======================================================
 
-if (exists(saveJournalButton)) {
+if (
+    exists(
+        saveJournalButton
+    )
+) {
 
     saveJournalButton.addEventListener(
         "click",
@@ -1731,7 +2363,8 @@ if (exists(saveJournalButton)) {
             event.preventDefault();
 
             if (
-                currentMessages.length === 0
+                currentMessages.length ===
+                0
             ) {
 
                 showStatus(
@@ -1740,6 +2373,7 @@ if (exists(saveJournalButton)) {
                 );
 
                 return;
+
             }
 
             if (!currentUser) {
@@ -1750,6 +2384,7 @@ if (exists(saveJournalButton)) {
                 );
 
                 return;
+
             }
 
 
@@ -1757,20 +2392,26 @@ if (exists(saveJournalButton)) {
 
                 const content =
                     currentMessages
-                        .map(function (message) {
+                        .map(
+                            function (message) {
 
-                            const role =
-                                message.role === "user"
-                                    ? "You"
-                                    : "Gemini";
+                                const role =
+                                    message.role ===
+                                    "user"
+                                        ? "You"
+                                        : "Gemini";
 
-                            return (
-                                role +
-                                ": " +
-                                message.text
-                            );
-                        })
-                        .join("\n\n");
+                                return (
+                                    role +
+                                    ": " +
+                                    message.text
+                                );
+
+                            }
+                        )
+                        .join(
+                            "\n\n"
+                        );
 
 
                 const token =
@@ -1782,7 +2423,8 @@ if (exists(saveJournalButton)) {
                         BACKEND_URL +
                         "/api/journal",
                         {
-                            method: "POST",
+                            method:
+                                "POST",
 
                             headers: {
 
@@ -1790,7 +2432,9 @@ if (exists(saveJournalButton)) {
                                     "application/json",
 
                                 "Authorization":
-                                    "Bearer " + token
+                                    "Bearer " +
+                                    token
+
                             },
 
                             body:
@@ -1806,15 +2450,22 @@ if (exists(saveJournalButton)) {
                                     content:
                                         content,
 
+                                    messages:
+                                        currentMessages,
+
                                     mood:
                                         null
+
                                 })
+
                         }
                     );
 
 
                 const data =
-                    await readApiResponse(response);
+                    await readApiResponse(
+                        response
+                    );
 
 
                 if (!response.ok) {
@@ -1824,6 +2475,7 @@ if (exists(saveJournalButton)) {
                         data.message ||
                         "Unable to save conversation."
                     );
+
                 }
 
 
@@ -1836,6 +2488,7 @@ if (exists(saveJournalButton)) {
 
                     currentEntryId =
                         data.id;
+
                 }
 
 
@@ -1853,9 +2506,12 @@ if (exists(saveJournalButton)) {
                     "Unable to save conversation.",
                     true
                 );
+
             }
+
         }
     );
+
 }
 
 
@@ -1879,6 +2535,7 @@ if (exists(saveButton)) {
                 );
 
                 return;
+
             }
 
             const content =
@@ -1894,6 +2551,7 @@ if (exists(saveButton)) {
                 );
 
                 return;
+
             }
 
 
@@ -1908,7 +2566,8 @@ if (exists(saveButton)) {
                         BACKEND_URL +
                         "/api/journal",
                         {
-                            method: "POST",
+                            method:
+                                "POST",
 
                             headers: {
 
@@ -1916,7 +2575,9 @@ if (exists(saveButton)) {
                                     "application/json",
 
                                 "Authorization":
-                                    "Bearer " + token
+                                    "Bearer " +
+                                    token
+
                             },
 
                             body:
@@ -1930,13 +2591,17 @@ if (exists(saveButton)) {
 
                                     mood:
                                         null
+
                                 })
+
                         }
                     );
 
 
                 const data =
-                    await readApiResponse(response);
+                    await readApiResponse(
+                        response
+                    );
 
 
                 if (!response.ok) {
@@ -1946,10 +2611,12 @@ if (exists(saveButton)) {
                         data.message ||
                         "Unable to save journal."
                     );
+
                 }
 
 
-                journalInput.value = "";
+                journalInput.value =
+                    "";
 
 
                 showStatus(
@@ -1971,9 +2638,12 @@ if (exists(saveButton)) {
                     "Unable to save journal.",
                     true
                 );
+
             }
+
         }
     );
+
 }
 
 
@@ -1991,10 +2661,14 @@ if (exists(clearButton)) {
 
             if (exists(journalInput)) {
 
-                journalInput.value = "";
+                journalInput.value =
+                    "";
+
             }
+
         }
     );
+
 }
 
 
@@ -2014,9 +2688,12 @@ if (exists(authModal)) {
             ) {
 
                 closeAuthModal();
+
             }
+
         }
     );
+
 }
 
 
@@ -2075,6 +2752,10 @@ console.log(
 
 console.log(
     "Journal deletion enabled."
+);
+
+console.log(
+    "Structured journal message display enabled."
 );
 
 console.log(
