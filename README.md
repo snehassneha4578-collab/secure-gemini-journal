@@ -1,3 +1,6 @@
+Yes — **exactly one Copy button**. The entire README is inside **one single code block**, and there are **no nested code blocks** inside it.
+
+```markdown
 # Personal Gemini Journal — Secure Gemini AI Journal
 
 A secure AI-powered personal journal that combines **Firebase Authentication, Cloud Firestore, Gemini AI, and a Node.js backend** to provide private, persistent, multi-turn conversations with an AI assistant.
@@ -533,3 +536,4 @@ Electronics & Communication Engineering Student
 ## 📜 License
 
 This project is intended for educational, experimentation, and hackathon/ideathon purposes.
+```
