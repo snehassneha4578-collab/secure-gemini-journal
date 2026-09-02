@@ -32,7 +32,8 @@ const app = express();
 // PORT
 // ======================================================
 
-const PORT = process.env.PORT || 8080;
+const PORT =
+    process.env.PORT || 8080;
 
 // ======================================================
 // MIDDLEWARE
@@ -40,7 +41,11 @@ const PORT = process.env.PORT || 8080;
 
 app.use(cors());
 
-app.use(express.json());
+app.use(
+    express.json({
+        limit: "1mb"
+    })
+);
 
 // ======================================================
 // GEMINI API
@@ -67,6 +72,251 @@ const ai =
     new GoogleGenAI({
         apiKey: geminiApiKey
     });
+
+// ======================================================
+// GEMINI MODEL CONFIGURATION
+// ======================================================
+//
+// Primary model:
+//   Gemini 3.6 Flash
+//
+// Fallback models:
+//   Gemini 3.5 Flash-Lite
+//   Gemini 3.1 Flash-Lite
+//
+// This protects the app from temporary 503/high-demand
+// errors.
+//
+// ======================================================
+
+const GEMINI_MODELS = [
+    "gemini-3.6-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-flash-lite"
+];
+
+// ======================================================
+// GEMINI RETRY SETTINGS
+// ======================================================
+
+const GEMINI_RETRIES_PER_MODEL = 2;
+
+const GEMINI_RETRY_DELAY_MS = 1500;
+
+// ======================================================
+// DELAY HELPER
+// ======================================================
+
+function sleep(
+    milliseconds
+) {
+
+    return new Promise(
+        (resolve) => {
+
+            setTimeout(
+                resolve,
+                milliseconds
+            );
+
+        }
+    );
+
+}
+
+// ======================================================
+// CHECK GEMINI 503 / TEMPORARY ERROR
+// ======================================================
+
+function isTemporaryGeminiError(
+    error
+) {
+
+    if (!error) {
+
+        return false;
+
+    }
+
+    const status =
+        Number(
+            error.status ||
+            error.code ||
+            error?.response?.status ||
+            0
+        );
+
+    const message =
+        String(
+            error.message ||
+            error
+        ).toLowerCase();
+
+    return (
+        status === 429 ||
+        status === 500 ||
+        status === 502 ||
+        status === 503 ||
+        status === 504 ||
+        message.includes(
+            "503"
+        ) ||
+        message.includes(
+            "unavailable"
+        ) ||
+        message.includes(
+            "high demand"
+        ) ||
+        message.includes(
+            "overloaded"
+        ) ||
+        message.includes(
+            "temporarily"
+        )
+    );
+
+}
+
+// ======================================================
+// GEMINI REQUEST WITH RETRY + FALLBACK
+// ======================================================
+
+async function generateGeminiResponse(
+    contents
+) {
+
+    let lastError =
+        null;
+
+
+    for (
+        let modelIndex = 0;
+        modelIndex < GEMINI_MODELS.length;
+        modelIndex++
+    ) {
+
+        const model =
+            GEMINI_MODELS[
+                modelIndex
+            ];
+
+
+        for (
+            let attempt = 1;
+            attempt <= GEMINI_RETRIES_PER_MODEL;
+            attempt++
+        ) {
+
+            try {
+
+                console.log(
+                    `Gemini model: ${model} | attempt ${attempt}/${GEMINI_RETRIES_PER_MODEL}`
+                );
+
+
+                const response =
+                    await ai.models.generateContent({
+
+                        model:
+                            model,
+
+                        contents:
+                            contents
+
+                    });
+
+
+                const reply =
+                    response.text;
+
+
+                if (
+                    !reply ||
+                    !reply.trim()
+                ) {
+
+                    throw new Error(
+                        "Gemini returned an empty response."
+                    );
+
+                }
+
+
+                console.log(
+                    `Gemini response received from ${model}.`
+                );
+
+
+                return {
+
+                    reply:
+                        reply.trim(),
+
+                    model:
+                        model
+
+                };
+
+            } catch (error) {
+
+                lastError =
+                    error;
+
+
+                console.error(
+                    `Gemini error using ${model}, attempt ${attempt}:`,
+                    error.message ||
+                    error
+                );
+
+
+                if (
+                    !isTemporaryGeminiError(
+                        error
+                    )
+                ) {
+
+                    throw error;
+
+                }
+
+
+                if (
+                    attempt <
+                    GEMINI_RETRIES_PER_MODEL
+                ) {
+
+                    console.log(
+                        `Temporary Gemini error. Retrying ${model}...`
+                    );
+
+                    await sleep(
+                        GEMINI_RETRY_DELAY_MS
+                    );
+
+                } else {
+
+                    console.log(
+                        `Model ${model} unavailable after retries.`
+                    );
+
+                }
+
+            }
+
+        }
+
+    }
+
+
+    throw (
+        lastError ||
+        new Error(
+            "All Gemini models are temporarily unavailable."
+        )
+    );
+
+}
 
 // ======================================================
 // SERVE FRONTEND
@@ -96,7 +346,9 @@ app.get(
                 "index.html"
             );
 
-        res.sendFile(indexPath);
+        res.sendFile(
+            indexPath
+        );
 
     }
 );
@@ -115,7 +367,10 @@ app.get(
                 "healthy",
 
             message:
-                "Backend is working"
+                "Backend is working",
+
+            geminiModels:
+                GEMINI_MODELS
 
         });
 
@@ -137,6 +392,7 @@ async function authenticateUser(
         const authHeader =
             req.headers.authorization;
 
+
         if (
             !authHeader ||
             !authHeader.startsWith(
@@ -153,8 +409,12 @@ async function authenticateUser(
 
         }
 
+
         const idToken =
-            authHeader.substring(7);
+            authHeader.substring(
+                7
+            );
+
 
         if (!idToken) {
 
@@ -167,18 +427,22 @@ async function authenticateUser(
 
         }
 
+
         const decodedToken =
             await auth.verifyIdToken(
                 idToken
             );
 
+
         req.user =
             decodedToken;
+
 
         console.log(
             "Authenticated UID:",
             decodedToken.uid
         );
+
 
         next();
 
@@ -189,6 +453,7 @@ async function authenticateUser(
             error.message
         );
 
+
         return res.status(401).json({
 
             error:
@@ -197,6 +462,265 @@ async function authenticateUser(
         });
 
     }
+
+}
+
+// ======================================================
+// FIRESTORE VALUE SERIALIZER
+// ======================================================
+//
+// Converts Firestore Timestamp and other values into
+// safe JSON-friendly values.
+//
+// ======================================================
+
+function serializeFirestoreValue(
+    value
+) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+
+        return value;
+
+    }
+
+
+    if (
+        typeof value ===
+        "string"
+    ) {
+
+        return value;
+
+    }
+
+
+    if (
+        typeof value ===
+        "number" ||
+        typeof value ===
+        "boolean"
+    ) {
+
+        return value;
+
+    }
+
+
+    // Firestore Timestamp
+
+    if (
+        value &&
+        typeof value.toDate ===
+        "function"
+    ) {
+
+        return value
+            .toDate()
+            .toISOString();
+
+    }
+
+
+    if (
+        Array.isArray(value)
+    ) {
+
+        return value.map(
+            serializeFirestoreValue
+        );
+
+    }
+
+
+    if (
+        typeof value ===
+        "object"
+    ) {
+
+        const result = {};
+
+        Object.keys(
+            value
+        ).forEach(
+            (key) => {
+
+                result[key] =
+                    serializeFirestoreValue(
+                        value[key]
+                    );
+
+            }
+        );
+
+        return result;
+
+    }
+
+
+    return String(
+        value
+    );
+
+}
+
+// ======================================================
+// NORMALIZE JOURNAL
+// ======================================================
+//
+// Ensures every journal returned to the frontend has
+// predictable string/array values.
+//
+// ======================================================
+
+function normalizeJournal(
+    doc
+) {
+
+    const data =
+        doc.data() || {};
+
+
+    let title =
+        data.title;
+
+
+    if (
+        typeof title !==
+        "string"
+    ) {
+
+        title =
+            title === null ||
+            title === undefined
+                ? ""
+                : String(title);
+
+    }
+
+
+    let content =
+        data.content;
+
+
+    if (
+        typeof content !==
+        "string"
+    ) {
+
+        if (
+            content === null ||
+            content === undefined
+        ) {
+
+            content =
+                "";
+
+        } else {
+
+            content =
+                String(content);
+
+        }
+
+    }
+
+
+    let messages =
+        Array.isArray(
+            data.messages
+        )
+            ? data.messages
+            : [];
+
+
+    messages =
+        messages
+            .filter(
+                (message) => {
+
+                    return (
+                        message &&
+                        typeof message ===
+                            "object"
+                    );
+
+                }
+            )
+            .map(
+                (message) => {
+
+                    return {
+
+                        role:
+                            message.role ===
+                            "user"
+                                ? "user"
+                                : "model",
+
+                        text:
+                            typeof message.text ===
+                            "string"
+                                ? message.text
+                                : String(
+                                    message.text ||
+                                    ""
+                                )
+
+                    };
+
+                }
+            );
+
+
+    let mood =
+        data.mood;
+
+
+    if (
+        mood !== null &&
+        mood !== undefined &&
+        typeof mood !== "string"
+    ) {
+
+        mood =
+            String(mood);
+
+    }
+
+
+    return {
+
+        id:
+            doc.id,
+
+        userId:
+            typeof data.userId ===
+            "string"
+                ? data.userId
+                : "",
+
+        title:
+            title,
+
+        content:
+            content,
+
+        mood:
+            mood || null,
+
+        messages:
+            messages,
+
+        createdAt:
+            serializeFirestoreValue(
+                data.createdAt
+            )
+
+    };
 
 }
 
@@ -213,6 +737,7 @@ app.post(
             "Gemini request received."
         );
 
+
         try {
 
             if (!geminiApiKey) {
@@ -226,9 +751,12 @@ app.post(
 
             }
 
+
             const {
                 messages
-            } = req.body;
+            } =
+                req.body;
+
 
             if (
                 !Array.isArray(messages) ||
@@ -244,6 +772,11 @@ app.post(
 
             }
 
+
+            // ==================================================
+            // CLEAN MESSAGES
+            // ==================================================
+
             const cleanMessages =
                 messages
                     .filter(
@@ -254,11 +787,15 @@ app.post(
                                 message &&
 
                                 (
-                                    message.role === "user" ||
-                                    message.role === "model"
+                                    message.role ===
+                                        "user" ||
+
+                                    message.role ===
+                                        "model"
                                 ) &&
 
-                                typeof message.text === "string" &&
+                                typeof message.text ===
+                                    "string" &&
 
                                 message.text.trim()
 
@@ -282,8 +819,10 @@ app.post(
                         }
                     );
 
+
             if (
-                cleanMessages.length === 0
+                cleanMessages.length ===
+                0
             ) {
 
                 return res.status(400).json({
@@ -295,13 +834,15 @@ app.post(
 
             }
 
+
             console.log(
                 "Conversation messages:",
                 cleanMessages.length
             );
 
+
             // ==================================================
-            // CONVERT CHAT MESSAGES TO GEMINI CONTENT FORMAT
+            // GEMINI CONTENT FORMAT
             // ==================================================
 
             const contents =
@@ -316,8 +857,10 @@ app.post(
                             parts: [
 
                                 {
+
                                     text:
                                         message.text
+
                                 }
 
                             ]
@@ -327,41 +870,24 @@ app.post(
                     }
                 );
 
+
             // ==================================================
             // GEMINI REQUEST
             // ==================================================
 
-            const response =
-                await ai.models.generateContent({
+            const geminiResult =
+                await generateGeminiResponse(
+                    contents
+                );
 
-                    model:
-                        "gemini-3.6-flash",
-
-                    contents:
-                        contents
-
-                });
 
             const reply =
-                response.text;
+                geminiResult.reply;
 
-            if (
-                !reply ||
-                !reply.trim()
-            ) {
 
-                return res.status(500).json({
+            const modelUsed =
+                geminiResult.model;
 
-                    error:
-                        "Gemini returned an empty response."
-
-                });
-
-            }
-
-            console.log(
-                "Gemini response received."
-            );
 
             // ==================================================
             // COMPLETE CONVERSATION
@@ -377,11 +903,12 @@ app.post(
                         "model",
 
                     text:
-                        reply.trim()
+                        reply
 
                 }
 
             ];
+
 
             // ==================================================
             // SAVE CHAT TO FIRESTORE
@@ -389,6 +916,7 @@ app.post(
 
             const uid =
                 req.user.uid;
+
 
             const journalRef =
                 await db
@@ -410,18 +938,29 @@ app.post(
                         userId:
                             uid,
 
+                        title:
+                            "Gemini Conversation",
+
+                        content:
+                            "",
+
                         messages:
                             completeMessages,
+
+                        mood:
+                            null,
 
                         createdAt:
                             FieldValue.serverTimestamp()
 
                     });
 
+
             console.log(
                 "Journal saved:",
                 journalRef.id
             );
+
 
             // ==================================================
             // SEND RESPONSE
@@ -430,12 +969,16 @@ app.post(
             return res.json({
 
                 response:
-                    reply.trim(),
+                    reply,
 
                 journalId:
-                    journalRef.id
+                    journalRef.id,
+
+                model:
+                    modelUsed
 
             });
+
 
         } catch (error) {
 
@@ -454,6 +997,25 @@ app.post(
             console.error(
                 "================================="
             );
+
+
+            const temporary =
+                isTemporaryGeminiError(
+                    error
+                );
+
+
+            if (temporary) {
+
+                return res.status(503).json({
+
+                    error:
+                        "Gemini is temporarily busy. The available Gemini models are experiencing high demand. Please try again in a few seconds."
+
+                });
+
+            }
+
 
             return res.status(500).json({
 
@@ -482,10 +1044,12 @@ async function getJournals(
         const uid =
             req.user.uid;
 
+
         console.log(
             "Loading journals for UID:",
             uid
         );
+
 
         const snapshot =
             await db
@@ -509,37 +1073,39 @@ async function getJournals(
 
                 .get();
 
+
         const journals = [];
+
 
         snapshot.forEach(
             (doc) => {
 
-                const data =
-                    doc.data();
-
-                journals.push({
-
-                    id:
-                        doc.id,
-
-                    ...data
-
-                });
+                journals.push(
+                    normalizeJournal(
+                        doc
+                    )
+                );
 
             }
         );
+
 
         console.log(
             "Journals found:",
             journals.length
         );
 
+
         return res.json({
 
             journals:
-                journals
+                journals,
+
+            count:
+                journals.length
 
         });
+
 
     } catch (error) {
 
@@ -547,6 +1113,7 @@ async function getJournals(
             "Journal retrieval error:",
             error
         );
+
 
         return res.status(500).json({
 
@@ -589,8 +1156,22 @@ async function getSingleJournal(
         const uid =
             req.user.uid;
 
+
         const journalId =
             req.params.journalId;
+
+
+        if (!journalId) {
+
+            return res.status(400).json({
+
+                error:
+                    "Journal ID is required."
+
+            });
+
+        }
+
 
         const journalDoc =
             await db
@@ -613,6 +1194,7 @@ async function getSingleJournal(
 
                 .get();
 
+
         if (
             !journalDoc.exists
         ) {
@@ -626,14 +1208,13 @@ async function getSingleJournal(
 
         }
 
-        return res.json({
 
-            id:
-                journalDoc.id,
+        return res.json(
+            normalizeJournal(
+                journalDoc
+            )
+        );
 
-            ...journalDoc.data()
-
-        });
 
     } catch (error) {
 
@@ -641,6 +1222,7 @@ async function getSingleJournal(
             "Single journal error:",
             error
         );
+
 
         return res.status(500).json({
 
@@ -683,16 +1265,32 @@ app.post(
             const uid =
                 req.user.uid;
 
+
             const {
                 title,
                 content,
                 mood,
                 messages
-            } = req.body;
+            } =
+                req.body;
+
+
+            const hasContent =
+                typeof content ===
+                    "string" &&
+                content.trim().length >
+                    0;
+
+
+            const hasMessages =
+                Array.isArray(messages) &&
+                messages.length >
+                    0;
+
 
             if (
-                !content &&
-                !messages
+                !hasContent &&
+                !hasMessages
             ) {
 
                 return res.status(400).json({
@@ -704,36 +1302,83 @@ app.post(
 
             }
 
+
             const journalData = {
 
                 userId:
                     uid,
 
                 title:
-                    title ||
-                    "Journal Entry",
+                    typeof title ===
+                        "string" &&
+                    title.trim()
+                        ? title.trim()
+                        : "Journal Entry",
 
                 content:
-                    content ||
-                    "",
+                    typeof content ===
+                        "string"
+                        ? content
+                        : "",
 
                 mood:
-                    mood ||
-                    null,
+                    typeof mood ===
+                        "string"
+                        ? mood
+                        : null,
 
                 createdAt:
                     FieldValue.serverTimestamp()
 
             };
 
+
             if (
-                Array.isArray(messages)
+                Array.isArray(
+                    messages
+                )
             ) {
 
                 journalData.messages =
-                    messages;
+                    messages
+                        .filter(
+                            (message) => {
+
+                                return (
+                                    message &&
+                                    typeof message ===
+                                        "object"
+                                );
+
+                            }
+                        )
+                        .map(
+                            (message) => {
+
+                                return {
+
+                                    role:
+                                        message.role ===
+                                        "user"
+                                            ? "user"
+                                            : "model",
+
+                                    text:
+                                        typeof message.text ===
+                                            "string"
+                                            ? message.text
+                                            : String(
+                                                message.text ||
+                                                ""
+                                            )
+
+                                };
+
+                            }
+                        );
 
             }
+
 
             const journalRef =
                 await db
@@ -754,10 +1399,12 @@ app.post(
                         journalData
                     );
 
+
             console.log(
                 "Manual journal saved:",
                 journalRef.id
             );
+
 
             return res.status(201).json({
 
@@ -772,12 +1419,14 @@ app.post(
 
             });
 
+
         } catch (error) {
 
             console.error(
                 "Journal creation error:",
                 error
             );
+
 
             return res.status(500).json({
 
@@ -805,8 +1454,22 @@ async function deleteJournal(
         const uid =
             req.user.uid;
 
+
         const journalId =
             req.params.journalId;
+
+
+        if (!journalId) {
+
+            return res.status(400).json({
+
+                error:
+                    "Journal ID is required."
+
+            });
+
+        }
+
 
         const journalRef =
             db
@@ -827,8 +1490,10 @@ async function deleteJournal(
                     journalId
                 );
 
+
         const journalDoc =
             await journalRef.get();
+
 
         if (
             !journalDoc.exists
@@ -843,12 +1508,15 @@ async function deleteJournal(
 
         }
 
+
         await journalRef.delete();
+
 
         console.log(
             "Journal deleted:",
             journalId
         );
+
 
         return res.json({
 
@@ -860,12 +1528,14 @@ async function deleteJournal(
 
         });
 
+
     } catch (error) {
 
         console.error(
             "Journal deletion error:",
             error
         );
+
 
         return res.status(500).json({
 
@@ -943,6 +1613,21 @@ app.listen(
 
         console.log(
             "Backend listening on 0.0.0.0"
+        );
+
+        console.log(
+            "Gemini models configured:"
+        );
+
+        GEMINI_MODELS.forEach(
+            (model) => {
+
+                console.log(
+                    " -",
+                    model
+                );
+
+            }
         );
 
         console.log(
