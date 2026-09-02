@@ -9,29 +9,18 @@ require("dotenv").config();
 
 const { GoogleGenAI } = require("@google/genai");
 
-const {
-    initializeApp
-} = require("firebase-admin/app");
+// ======================================================
+// FIREBASE ADMIN
+// ======================================================
 
 const {
-    getAuth
-} = require("firebase-admin/auth");
+    auth,
+    db
+} = require("./firebase-admin");
 
 const {
-    getFirestore,
     FieldValue
 } = require("firebase-admin/firestore");
-
-
-// ======================================================
-// FIREBASE ADMIN INITIALIZATION
-// ======================================================
-
-initializeApp();
-
-const auth = getAuth();
-const db = getFirestore();
-
 
 // ======================================================
 // EXPRESS APP
@@ -39,13 +28,11 @@ const db = getFirestore();
 
 const app = express();
 
-
 // ======================================================
 // PORT
 // ======================================================
 
 const PORT = process.env.PORT || 8080;
-
 
 // ======================================================
 // MIDDLEWARE
@@ -55,12 +42,12 @@ app.use(cors());
 
 app.use(express.json());
 
-
 // ======================================================
 // GEMINI API
 // ======================================================
 
-const geminiApiKey = process.env.GEMINI_API_KEY;
+const geminiApiKey =
+    process.env.GEMINI_API_KEY;
 
 if (!geminiApiKey) {
 
@@ -76,10 +63,10 @@ if (!geminiApiKey) {
 
 }
 
-const ai = new GoogleGenAI({
-    apiKey: geminiApiKey
-});
-
+const ai =
+    new GoogleGenAI({
+        apiKey: geminiApiKey
+    });
 
 // ======================================================
 // SERVE FRONTEND
@@ -87,65 +74,78 @@ const ai = new GoogleGenAI({
 
 app.use(
     express.static(
-        path.join(__dirname, "public")
+        path.join(
+            __dirname,
+            "public"
+        )
     )
 );
-
 
 // ======================================================
 // HOME PAGE
 // ======================================================
 
-app.get("/", (req, res) => {
+app.get(
+    "/",
+    (req, res) => {
 
-    const indexPath =
-        path.join(
-            __dirname,
-            "public",
-            "index.html"
-        );
+        const indexPath =
+            path.join(
+                __dirname,
+                "public",
+                "index.html"
+            );
 
-    res.sendFile(indexPath);
+        res.sendFile(indexPath);
 
-});
-
+    }
+);
 
 // ======================================================
 // HEALTH CHECK
 // ======================================================
 
-app.get("/health", (req, res) => {
+app.get(
+    "/health",
+    (req, res) => {
 
-    res.status(200).json({
+        res.status(200).json({
 
-        status: "healthy",
+            status:
+                "healthy",
 
-        message: "Backend is working"
+            message:
+                "Backend is working"
 
-    });
+        });
 
-});
-
+    }
+);
 
 // ======================================================
 // FIREBASE AUTHENTICATION MIDDLEWARE
 // ======================================================
 
-async function authenticateUser(req, res, next) {
+async function authenticateUser(
+    req,
+    res,
+    next
+) {
 
     try {
+
+        // ------------------------------------------------
+        // GET AUTHORIZATION HEADER
+        // ------------------------------------------------
 
         const authHeader =
             req.headers.authorization;
 
-
-        // ------------------------------------------------
-        // CHECK AUTHORIZATION HEADER
-        // ------------------------------------------------
-
         if (
             !authHeader ||
-            !authHeader.startsWith("Bearer ")
+            !authHeader.startsWith(
+                "Bearer "
+            )
         ) {
 
             return res.status(401).json({
@@ -157,14 +157,12 @@ async function authenticateUser(req, res, next) {
 
         }
 
-
         // ------------------------------------------------
-        // GET TOKEN
+        // GET FIREBASE ID TOKEN
         // ------------------------------------------------
 
         const idToken =
             authHeader.substring(7);
-
 
         if (!idToken) {
 
@@ -177,14 +175,14 @@ async function authenticateUser(req, res, next) {
 
         }
 
-
         // ------------------------------------------------
         // VERIFY FIREBASE ID TOKEN
         // ------------------------------------------------
 
         const decodedToken =
-            await auth.verifyIdToken(idToken);
-
+            await auth.verifyIdToken(
+                idToken
+            );
 
         // ------------------------------------------------
         // STORE VERIFIED USER
@@ -193,12 +191,10 @@ async function authenticateUser(req, res, next) {
         req.user =
             decodedToken;
 
-
         console.log(
             "Authenticated UID:",
             decodedToken.uid
         );
-
 
         next();
 
@@ -220,7 +216,6 @@ async function authenticateUser(req, res, next) {
 
 }
 
-
 // ======================================================
 // GEMINI CHAT - MULTI TURN
 // ======================================================
@@ -236,9 +231,9 @@ app.post(
 
         try {
 
-            // --------------------------------------------
+            // ------------------------------------------------
             // CHECK GEMINI API KEY
-            // --------------------------------------------
+            // ------------------------------------------------
 
             if (!geminiApiKey) {
 
@@ -251,15 +246,13 @@ app.post(
 
             }
 
-
-            // --------------------------------------------
+            // ------------------------------------------------
             // GET MESSAGES
-            // --------------------------------------------
+            // ------------------------------------------------
 
             const {
                 messages
             } = req.body;
-
 
             if (
                 !Array.isArray(messages) ||
@@ -275,40 +268,47 @@ app.post(
 
             }
 
-
-            // --------------------------------------------
+            // ------------------------------------------------
             // CLEAN MESSAGE HISTORY
-            // --------------------------------------------
+            // ------------------------------------------------
 
             const cleanMessages =
                 messages
-                    .filter((message) => {
+                    .filter(
+                        (message) => {
 
-                        return (
-                            message &&
-                            (
-                                message.role === "user" ||
-                                message.role === "model"
-                            ) &&
-                            typeof message.text === "string" &&
-                            message.text.trim()
-                        );
+                            return (
 
-                    })
-                    .map((message) => {
+                                message &&
 
-                        return {
+                                (
+                                    message.role === "user" ||
+                                    message.role === "model"
+                                ) &&
 
-                            role:
-                                message.role,
+                                typeof message.text === "string" &&
 
-                            text:
                                 message.text.trim()
 
-                        };
+                            );
 
-                    });
+                        }
+                    )
+                    .map(
+                        (message) => {
 
+                            return {
+
+                                role:
+                                    message.role,
+
+                                text:
+                                    message.text.trim()
+
+                            };
+
+                        }
+                    );
 
             if (
                 cleanMessages.length === 0
@@ -323,42 +323,41 @@ app.post(
 
             }
 
-
             console.log(
                 "Conversation messages:",
                 cleanMessages.length
             );
 
-
-            // --------------------------------------------
+            // ------------------------------------------------
             // CONVERT TO GEMINI FORMAT
-            // --------------------------------------------
+            // ------------------------------------------------
 
             const contents =
-                cleanMessages.map((message) => {
+                cleanMessages.map(
+                    (message) => {
 
-                    return {
+                        return {
 
-                        role:
-                            message.role,
+                            role:
+                                message.role,
 
-                        parts: [
+                            parts: [
 
-                            {
-                                text:
-                                    message.text
-                            }
+                                {
+                                    text:
+                                        message.text
+                                }
 
-                        ]
+                            ]
 
-                    };
+                        };
 
-                });
+                    }
+                );
 
-
-            // --------------------------------------------
+            // ------------------------------------------------
             // CALL GEMINI
-            // --------------------------------------------
+            // ------------------------------------------------
 
             const response =
                 await ai.models.generateContent({
@@ -371,14 +370,12 @@ app.post(
 
                 });
 
-
-            // --------------------------------------------
-            // GET RESPONSE
-            // --------------------------------------------
+            // ------------------------------------------------
+            // GET GEMINI RESPONSE
+            // ------------------------------------------------
 
             const reply =
                 response.text;
-
 
             if (
                 !reply ||
@@ -394,15 +391,13 @@ app.post(
 
             }
 
-
             console.log(
                 "Gemini response received."
             );
 
-
-            // --------------------------------------------
-            // SAVE COMPLETE CONVERSATION
-            // --------------------------------------------
+            // ------------------------------------------------
+            // COMPLETE CONVERSATION
+            // ------------------------------------------------
 
             const completeMessages = [
 
@@ -420,23 +415,31 @@ app.post(
 
             ];
 
-
-            // --------------------------------------------
-            // SAVE JOURNAL TO FIRESTORE
-            // --------------------------------------------
+            // ------------------------------------------------
+            // USER ID
+            // ------------------------------------------------
 
             const uid =
                 req.user.uid;
 
+            // ------------------------------------------------
+            // SAVE CONVERSATION TO FIRESTORE
+            // ------------------------------------------------
 
             const journalRef =
                 await db
 
-                    .collection("users")
+                    .collection(
+                        "users"
+                    )
 
-                    .doc(uid)
+                    .doc(
+                        uid
+                    )
 
-                    .collection("journal")
+                    .collection(
+                        "journal"
+                    )
 
                     .add({
 
@@ -451,16 +454,14 @@ app.post(
 
                     });
 
-
             console.log(
                 "Journal saved:",
                 journalRef.id
             );
 
-
-            // --------------------------------------------
-            // RETURN RESPONSE
-            // --------------------------------------------
+            // ------------------------------------------------
+            // RETURN GEMINI RESPONSE
+            // ------------------------------------------------
 
             return res.json({
 
@@ -490,7 +491,6 @@ app.post(
                 "================================="
             );
 
-
             return res.status(500).json({
 
                 error:
@@ -504,37 +504,39 @@ app.post(
     }
 );
 
-
 // ======================================================
 // GET JOURNALS
 // ======================================================
-// Supports:
-// /api/journals
-// /api/journal
-// ======================================================
 
-async function getJournals(req, res) {
+async function getJournals(
+    req,
+    res
+) {
 
     try {
 
         const uid =
             req.user.uid;
 
-
         console.log(
             "Loading journals for UID:",
             uid
         );
 
-
         const snapshot =
             await db
 
-                .collection("users")
+                .collection(
+                    "users"
+                )
 
-                .doc(uid)
+                .doc(
+                    uid
+                )
 
-                .collection("journal")
+                .collection(
+                    "journal"
+                )
 
                 .orderBy(
                     "createdAt",
@@ -543,33 +545,30 @@ async function getJournals(req, res) {
 
                 .get();
 
-
         const journals = [];
 
+        snapshot.forEach(
+            (doc) => {
 
-        snapshot.forEach((doc) => {
+                const data =
+                    doc.data();
 
-            const data =
-                doc.data();
+                journals.push({
 
+                    id:
+                        doc.id,
 
-            journals.push({
+                    ...data
 
-                id:
-                    doc.id,
+                });
 
-                ...data
-
-            });
-
-        });
-
+            }
+        );
 
         console.log(
             "Journals found:",
             journals.length
         );
-
 
         return res.json({
 
@@ -585,7 +584,6 @@ async function getJournals(req, res) {
             error
         );
 
-
         return res.status(500).json({
 
             error:
@@ -596,7 +594,6 @@ async function getJournals(req, res) {
     }
 
 }
-
 
 // ======================================================
 // GET JOURNALS - BOTH ROUTES
@@ -614,196 +611,280 @@ app.get(
     getJournals
 );
 
-
 // ======================================================
 // GET SINGLE JOURNAL
 // ======================================================
 
-app.get(
-    "/api/journals/:journalId",
-    authenticateUser,
-    async (req, res) => {
-
-        try {
-
-            const uid =
-                req.user.uid;
-
-
-            const journalId =
-                req.params.journalId;
-
-
-            const journalDoc =
-                await db
-
-                    .collection("users")
-
-                    .doc(uid)
-
-                    .collection("journal")
-
-                    .doc(journalId)
-
-                    .get();
-
-
-            if (
-                !journalDoc.exists
-            ) {
-
-                return res.status(404).json({
-
-                    error:
-                        "Journal not found."
-
-                });
-
-            }
-
-
-            return res.json({
-
-                id:
-                    journalDoc.id,
-
-                ...journalDoc.data()
-
-            });
-
-        } catch (error) {
-
-            console.error(
-                "Single journal error:",
-                error
-            );
-
-
-            return res.status(500).json({
-
-                error:
-                    "Failed to retrieve journal."
-
-            });
-
-        }
-
-    }
-);
-
-
-// ======================================================
-// GET SINGLE JOURNAL
-// Also support /api/journal/:journalId
-// ======================================================
-
-app.get(
-    "/api/journal/:journalId",
-    authenticateUser,
-    async (req, res) => {
-
-        try {
-
-            const uid =
-                req.user.uid;
-
-
-            const journalId =
-                req.params.journalId;
-
-
-            const journalDoc =
-                await db
-
-                    .collection("users")
-
-                    .doc(uid)
-
-                    .collection("journal")
-
-                    .doc(journalId)
-
-                    .get();
-
-
-            if (
-                !journalDoc.exists
-            ) {
-
-                return res.status(404).json({
-
-                    error:
-                        "Journal not found."
-
-                });
-
-            }
-
-
-            return res.json({
-
-                id:
-                    journalDoc.id,
-
-                ...journalDoc.data()
-
-            });
-
-        } catch (error) {
-
-            console.error(
-                "Single journal error:",
-                error
-            );
-
-
-            return res.status(500).json({
-
-                error:
-                    "Failed to retrieve journal."
-
-            });
-
-        }
-
-    }
-);
-
-
-// ======================================================
-// DELETE JOURNAL
-// ======================================================
-
-async function deleteJournal(req, res) {
+async function getSingleJournal(
+    req,
+    res
+) {
 
     try {
 
         const uid =
             req.user.uid;
 
+        const journalId =
+            req.params.journalId;
+
+        const journalDoc =
+            await db
+
+                .collection(
+                    "users"
+                )
+
+                .doc(
+                    uid
+                )
+
+                .collection(
+                    "journal"
+                )
+
+                .doc(
+                    journalId
+                )
+
+                .get();
+
+        if (
+            !journalDoc.exists
+        ) {
+
+            return res.status(404).json({
+
+                error:
+                    "Journal not found."
+
+            });
+
+        }
+
+        return res.json({
+
+            id:
+                journalDoc.id,
+
+            ...journalDoc.data()
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Single journal error:",
+            error
+        );
+
+        return res.status(500).json({
+
+            error:
+                "Failed to retrieve journal."
+
+        });
+
+    }
+
+}
+
+// ======================================================
+// GET SINGLE JOURNAL - BOTH ROUTES
+// ======================================================
+
+app.get(
+    "/api/journals/:journalId",
+    authenticateUser,
+    getSingleJournal
+);
+
+app.get(
+    "/api/journal/:journalId",
+    authenticateUser,
+    getSingleJournal
+);
+
+// ======================================================
+// CREATE JOURNAL
+// ======================================================
+
+app.post(
+    "/api/journal",
+    authenticateUser,
+    async (req, res) => {
+
+        try {
+
+            const uid =
+                req.user.uid;
+
+            const {
+                title,
+                content,
+                mood,
+                messages
+            } = req.body;
+
+            if (
+                !content &&
+                !messages
+            ) {
+
+                return res.status(400).json({
+
+                    error:
+                        "Journal content is required."
+
+                });
+
+            }
+
+            const journalData = {
+
+                userId:
+                    uid,
+
+                title:
+                    title ||
+                    "Journal Entry",
+
+                content:
+                    content ||
+                    "",
+
+                mood:
+                    mood ||
+                    null,
+
+                createdAt:
+                    FieldValue.serverTimestamp()
+
+            };
+
+            if (
+                Array.isArray(messages)
+            ) {
+
+                journalData.messages =
+                    messages;
+
+            }
+
+            const journalRef =
+                await db
+
+                    .collection(
+                        "users"
+                    )
+
+                    .doc(
+                        uid
+                    )
+
+                    .collection(
+                        "journal"
+                    )
+
+                    .add(
+                        journalData
+                    );
+
+            console.log(
+                "Manual journal saved:",
+                journalRef.id
+            );
+
+            return res.status(201).json({
+
+                success:
+                    true,
+
+                id:
+                    journalRef.id,
+
+                message:
+                    "Journal saved successfully."
+
+            });
+
+        } catch (error) {
+
+            console.error(
+                "Journal creation error:",
+                error
+            );
+
+            return res.status(500).json({
+
+                error:
+                    "Failed to save journal."
+
+            });
+
+        }
+
+    }
+);
+
+// ======================================================
+// DELETE JOURNAL
+// ======================================================
+
+async function deleteJournal(
+    req,
+    res
+) {
+
+    try {
+
+        const uid =
+            req.user.uid;
 
         const journalId =
             req.params.journalId;
 
+        const journalRef =
+            db
 
-        await db
+                .collection(
+                    "users"
+                )
 
-            .collection("users")
+                .doc(
+                    uid
+                )
 
-            .doc(uid)
+                .collection(
+                    "journal"
+                )
 
-            .collection("journal")
+                .doc(
+                    journalId
+                );
 
-            .doc(journalId)
+        const journalDoc =
+            await journalRef.get();
 
-            .delete();
+        if (
+            !journalDoc.exists
+        ) {
 
+            return res.status(404).json({
+
+                error:
+                    "Journal not found."
+
+            });
+
+        }
+
+        await journalRef.delete();
 
         console.log(
             "Journal deleted:",
             journalId
         );
-
 
         return res.json({
 
@@ -822,7 +903,6 @@ async function deleteJournal(req, res) {
             error
         );
 
-
         return res.status(500).json({
 
             error:
@@ -833,7 +913,6 @@ async function deleteJournal(req, res) {
     }
 
 }
-
 
 app.delete(
     "/api/journals/:journalId",
@@ -847,9 +926,8 @@ app.delete(
     deleteJournal
 );
 
-
 // ======================================================
-// 404 API HANDLER
+// API 404 HANDLER
 // ======================================================
 
 app.use(
@@ -865,7 +943,6 @@ app.use(
 
     }
 );
-
 
 // ======================================================
 // START SERVER
