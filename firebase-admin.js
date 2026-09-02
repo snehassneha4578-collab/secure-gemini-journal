@@ -1,13 +1,7 @@
-// ======================================================
+//
 // FIREBASE ADMIN - BACKEND
-// ======================================================
-
-const path = require("path");
-
-
-// ======================================================
-// FIREBASE ADMIN IMPORTS
-// ======================================================
+// Render-compatible secure configuration
+//
 
 const {
     initializeApp,
@@ -25,16 +19,81 @@ const {
 
 
 // ======================================================
-// SERVICE ACCOUNT
+// CHECK REQUIRED ENVIRONMENT VARIABLES
 // ======================================================
 
-const serviceAccount =
-    require(
-        path.join(
-            __dirname,
-            "serviceAccountKey.json"
-        )
+const projectId =
+    process.env.FIREBASE_PROJECT_ID;
+
+const clientEmail =
+    process.env.FIREBASE_CLIENT_EMAIL;
+
+const privateKey =
+    process.env.FIREBASE_PRIVATE_KEY;
+
+
+// ======================================================
+// VALIDATE CONFIGURATION
+// ======================================================
+
+if (
+    !projectId ||
+    !clientEmail ||
+    !privateKey
+) {
+
+    console.error(
+        "Firebase Admin configuration is missing."
     );
+
+    console.error(
+        "Required environment variables:"
+    );
+
+    console.error(
+        "FIREBASE_PROJECT_ID"
+    );
+
+    console.error(
+        "FIREBASE_CLIENT_EMAIL"
+    );
+
+    console.error(
+        "FIREBASE_PRIVATE_KEY"
+    );
+
+    throw new Error(
+        "Firebase Admin environment variables are missing."
+    );
+}
+
+
+// ======================================================
+// FIX PRIVATE KEY FORMAT
+// ======================================================
+
+const formattedPrivateKey =
+    privateKey.replace(
+        /\\n/g,
+        "\n"
+    );
+
+
+// ======================================================
+// FIREBASE ADMIN CONFIGURATION
+// ======================================================
+
+const firebaseConfig = {
+
+    projectId:
+        projectId,
+
+    clientEmail:
+        clientEmail,
+
+    privateKey:
+        formattedPrivateKey
+};
 
 
 // ======================================================
@@ -46,13 +105,15 @@ let app;
 if (getApps().length === 0) {
 
     app = initializeApp({
-        credential: cert(serviceAccount)
+
+        credential:
+            cert(firebaseConfig)
     });
 
 } else {
 
-    app = getApps()[0];
-
+    app =
+        getApps()[0];
 }
 
 
@@ -68,11 +129,28 @@ const db =
 
 
 // ======================================================
+// STARTUP MESSAGE
+// ======================================================
+
+console.log(
+    "Firebase Admin initialized successfully."
+);
+
+console.log(
+    "Firebase project:",
+    projectId
+);
+
+
+// ======================================================
 // EXPORT
 // ======================================================
 
 module.exports = {
+
     app,
+
     auth,
+
     db
 };
